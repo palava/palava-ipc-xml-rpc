@@ -16,47 +16,52 @@
 
 package de.cosmocode.palava.ipc.xml.rpc;
 
-import java.io.StringWriter;
 import java.util.List;
 import java.util.Map;
 
+import javax.annotation.concurrent.ThreadSafe;
+import javax.xml.parsers.DocumentBuilder;
+
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelHandlerContext;
+import org.jboss.netty.channel.ChannelHandler.Sharable;
 import org.jboss.netty.handler.codec.oneone.OneToOneEncoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.w3c.dom.Document;
 
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 
-import redstone.xmlrpc.XmlRpcSerializer;
-
 /**
- * Encoder which encodes {@link Map}s/{@link List}s into their xml-rpc counterparts.
+ * Encoder which encodes {@link Map}s/{@link List}s into xml-rpc {@link Document}s.
  *
  * @since 1.0
  * @author Willi Schoenborn
  */
+@Sharable
+@ThreadSafe
 final class XmlRpcEncoder extends OneToOneEncoder {
 
     private static final Logger LOG = LoggerFactory.getLogger(XmlRpcEncoder.class);
 
-    private final XmlRpcSerializer serializer;
+    private final DocumentBuilder builder;
     
     @Inject
-    public XmlRpcEncoder(XmlRpcSerializer serializer) {
-        this.serializer = Preconditions.checkNotNull(serializer, "Serializer");
+    public XmlRpcEncoder(DocumentBuilder builder) {
+        this.builder = Preconditions.checkNotNull(builder, "Builder");
     }
     
     @Override
     protected Object encode(ChannelHandlerContext context, Channel channel, Object message) throws Exception {
         if (message instanceof Map<?, ?> || message instanceof List<?>) {
-            final StringWriter writer = new StringWriter();
-            LOG.trace("Serializing {} as xml", message);
-            serializer.serialize(message, writer);
-            return writer.toString();
+            final Document document = builder.newDocument();
+            // TODO implement
+            
+            
+            return document;
         } else {
-            return null;
+            return message;
         }
     }
 

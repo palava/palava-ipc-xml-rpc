@@ -18,22 +18,16 @@ package de.cosmocode.palava.ipc.xml.rpc;
 
 import org.jboss.netty.channel.ChannelPipeline;
 import org.jboss.netty.channel.ChannelPipelineFactory;
-import org.jboss.netty.channel.Channels;
-import org.jboss.netty.handler.codec.string.StringDecoder;
-import org.jboss.netty.handler.codec.string.StringEncoder;
 
-import com.google.common.base.Charsets;
 import com.google.inject.Binder;
 import com.google.inject.Module;
 import com.google.inject.Provider;
 import com.google.inject.Provides;
-import com.google.inject.Scopes;
 import com.google.inject.Singleton;
 
 import de.cosmocode.palava.core.Registry;
 import de.cosmocode.palava.ipc.protocol.Protocol;
 import de.cosmocode.palava.ipc.xml.Xml;
-import de.cosmocode.palava.ipc.xml.XmlFrameDecoder;
 
 /**
  * Binds xml-rpc channel decoders/encoders/handlers.
@@ -41,40 +35,33 @@ import de.cosmocode.palava.ipc.xml.XmlFrameDecoder;
  * @since 1.0
  * @author Willi Schoenborn
  */
-public final class XmlRpcModule implements Module {
+public final class XmlRpcNettyModule implements Module {
 
     @Override
     public void configure(Binder binder) {
-        // frame decoders are stateful
-        binder.bind(XmlFrameDecoder.class).in(Scopes.NO_SCOPE);
-        binder.bind(StringDecoder.class).toInstance(new StringDecoder(Charsets.UTF_8));
-        binder.bind(StringEncoder.class).toInstance(new StringEncoder(Charsets.UTF_8));
         binder.bind(XmlRpcDecoder.class).in(Singleton.class);
         binder.bind(XmlRpcEncoder.class).in(Singleton.class);
         binder.bind(XmlRpcHandler.class).in(Singleton.class);
+        binder.bind(XmlRpcProtocol.class).asEagerSingleton();
     }
-
+    
     /**
-     * Provides the channel pipeline for netty.
+     * Provides a channel pipeline.
      * 
-     * @since 1.0 
-     * @param frameDecoder the frame decoder
-     * @param stringDecoder the string decoder
-     * @param stringEncoder the string encoder
-     * @param rpcDecoder the rpc decoder
-     * @param rpcEncoder the rpc encoder
+     * @since 1.0
+     * @param pipeline the backing xml pipeline
+     * @param rpcDecoder the xml-rpc decoder
+     * @param rpcEncoder the xml-rpc encoder
      * @param handler the xml-rpc handler
      * @return a new {@link ChannelPipeline}
      */
     @Provides
-    ChannelPipeline provideChannelPipeline(XmlFrameDecoder frameDecoder, StringDecoder stringDecoder,
-        StringEncoder stringEncoder, XmlRpcDecoder rpcDecoder, XmlRpcEncoder rpcEncoder, XmlRpcHandler handler) {
-        return Channels.pipeline(
-            frameDecoder,
-            stringDecoder, stringEncoder,
-            rpcDecoder, rpcEncoder,
-            handler
-        );
+    ChannelPipeline provideChannelPipeline(@Xml ChannelPipeline pipeline, XmlRpcDecoder rpcDecoder, 
+        XmlRpcEncoder rpcEncoder, XmlRpcHandler handler) {
+        pipeline.addLast("rpc-decoder", rpcDecoder);
+        pipeline.addLast("rpc-encoder", rpcEncoder);
+        pipeline.addLast("rpc-handler", handler);
+        return pipeline;
     }
     
     /**
@@ -106,9 +93,9 @@ public final class XmlRpcModule implements Module {
      */
     @Provides
     @Singleton
-    @Xml
+    @XmlRpc
     Iterable<Protocol> provideProtocols(Registry registry) {
-        return registry.find(Protocol.class, Xml.OR_ANY);
+        return registry.find(Protocol.class, XmlRpc.OR_ANY);
     }
     
 }

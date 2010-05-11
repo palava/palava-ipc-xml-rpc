@@ -47,7 +47,6 @@ import de.cosmocode.palava.ipc.protocol.DefaultDetachedConnection;
 import de.cosmocode.palava.ipc.protocol.DetachedConnection;
 import de.cosmocode.palava.ipc.protocol.Protocol;
 import de.cosmocode.palava.ipc.protocol.ProtocolException;
-import de.cosmocode.palava.ipc.xml.Xml;
 import de.cosmocode.palava.jmx.MBeanService;
 
 
@@ -73,7 +72,7 @@ final class XmlRpcHandler extends SimpleChannelHandler implements Initializable,
     private final MBeanService mBeanService;
     
     @Inject
-    public XmlRpcHandler(Registry registry, @Xml Iterable<Protocol> protocols, MBeanService mBeanService) {
+    public XmlRpcHandler(Registry registry, @XmlRpc Iterable<Protocol> protocols, MBeanService mBeanService) {
         this.registry = Preconditions.checkNotNull(registry, "Registry");
         this.protocols = Preconditions.checkNotNull(protocols, "Protocols");
         this.mBeanService = Preconditions.checkNotNull(mBeanService, "MBeanService");

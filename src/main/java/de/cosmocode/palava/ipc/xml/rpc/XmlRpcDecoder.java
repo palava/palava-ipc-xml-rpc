@@ -19,27 +19,43 @@ package de.cosmocode.palava.ipc.xml.rpc;
 import java.util.List;
 import java.util.Map;
 
+import javax.annotation.concurrent.ThreadSafe;
+
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelHandlerContext;
+import org.jboss.netty.channel.ChannelHandler.Sharable;
 import org.jboss.netty.handler.codec.oneone.OneToOneDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.w3c.dom.Document;
+
+import com.google.common.collect.Maps;
 
 /**
- * Decoder which decodes xml-rpc values into {@link Map}s/{@link List}s.
+ * Decoder which decodes xml-rpc {@link Document}s into {@link Map}s/{@link List}s.
  *
  * @since 1.0
  * @author Willi Schoenborn
  */
+@Sharable
+@ThreadSafe
 final class XmlRpcDecoder extends OneToOneDecoder {
 
     private static final Logger LOG = LoggerFactory.getLogger(XmlRpcDecoder.class);
 
     @Override
     protected Object decode(ChannelHandlerContext context, Channel channel, Object message) throws Exception {
-        
-        // TODO Auto-generated method stub
-        return null;
+        if (message instanceof Document) {
+            final Document document = Document.class.cast(message);
+            // TODO single struct vs multiple arguments
+            
+            
+            
+
+            return Maps.newHashMap();
+        } else {
+            return message;
+        }
     }    
     
 }
