@@ -16,10 +16,10 @@
 
 package de.cosmocode.palava.ipc.xml.rpc;
 
-import java.util.NoSuchElementException;
 import java.util.concurrent.ConcurrentMap;
 
 import javax.annotation.concurrent.ThreadSafe;
+import javax.xml.parsers.DocumentBuilder;
 
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelHandler;
@@ -31,6 +31,7 @@ import org.jboss.netty.channel.SimpleChannelHandler;
 import org.jboss.netty.channel.ChannelHandler.Sharable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.w3c.dom.Document;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.MapMaker;
@@ -38,16 +39,12 @@ import com.google.inject.Inject;
 
 import de.cosmocode.collections.Procedure;
 import de.cosmocode.palava.core.Registry;
-import de.cosmocode.palava.core.lifecycle.Disposable;
-import de.cosmocode.palava.core.lifecycle.Initializable;
-import de.cosmocode.palava.core.lifecycle.LifecycleException;
+import de.cosmocode.palava.ipc.IpcCommandExecutionException;
+import de.cosmocode.palava.ipc.IpcCommandExecutor;
 import de.cosmocode.palava.ipc.IpcConnectionCreateEvent;
 import de.cosmocode.palava.ipc.IpcConnectionDestroyEvent;
 import de.cosmocode.palava.ipc.protocol.DefaultDetachedConnection;
 import de.cosmocode.palava.ipc.protocol.DetachedConnection;
-import de.cosmocode.palava.ipc.protocol.Protocol;
-import de.cosmocode.palava.ipc.protocol.ProtocolException;
-import de.cosmocode.palava.jmx.MBeanService;
 
 
 /**
@@ -59,7 +56,7 @@ import de.cosmocode.palava.jmx.MBeanService;
  */
 @Sharable
 @ThreadSafe
-final class XmlRpcHandler extends SimpleChannelHandler implements Initializable, Disposable {
+final class XmlRpcHandler extends SimpleChannelHandler {
 
     private static final Logger LOG = LoggerFactory.getLogger(XmlRpcHandler.class);
     
@@ -67,20 +64,15 @@ final class XmlRpcHandler extends SimpleChannelHandler implements Initializable,
     
     private final Registry registry;
     
-    private final Iterable<Protocol> protocols;
+    private IpcCommandExecutor executor;
     
-    private final MBeanService mBeanService;
+    private final DocumentBuilder builder;
     
     @Inject
-    public XmlRpcHandler(Registry registry, @XmlRpc Iterable<Protocol> protocols, MBeanService mBeanService) {
+    public XmlRpcHandler(Registry registry, IpcCommandExecutor executor, DocumentBuilder builder) {
         this.registry = Preconditions.checkNotNull(registry, "Registry");
-        this.protocols = Preconditions.checkNotNull(protocols, "Protocols");
-        this.mBeanService = Preconditions.checkNotNull(mBeanService, "MBeanService");
-    }
-    
-    @Override
-    public void initialize() throws LifecycleException {
-        mBeanService.register(this);
+        this.executor = Preconditions.checkNotNull(executor, "Executor");
+        this.builder = Preconditions.checkNotNull(builder, "Builder");
     }
     
     @Override
@@ -100,39 +92,34 @@ final class XmlRpcHandler extends SimpleChannelHandler implements Initializable,
     
     @Override
     public void messageReceived(ChannelHandlerContext context, MessageEvent event) throws Exception {
-        final Object request = event.getMessage();
-        final Channel channel = event.getChannel();
-        
-        final Protocol protocol = findProtocol(request);
-        final DetachedConnection connection = connections.get(channel);
-        final Object response = process(protocol, request, connection);
-        
-        if (response == Protocol.NO_RESPONSE) {
-            LOG.trace("Omitting response as requested by {}", protocol);
+        if (event.getMessage() instanceof XmlRpcCall) {
+            final XmlRpcCall call = XmlRpcCall.class.cast(event.getMessage());
+            final Channel channel = event.getChannel();
+            final DetachedConnection connection = connections.get(channel);
+            call.attachTo(connection);
+            final Object result = process(call);
+            event.getChannel().write(result);
         } else {
-            channel.write(response);
+            throw new IllegalStateException(String.format("Unknown message {}", event.getMessage()));
         }
     }
     
-    private Protocol findProtocol(Object request) {
-        for (Protocol protocol : protocols) {
-            if (protocol.supports(request)) return protocol;
-        }
-        throw new NoSuchElementException("No protocol found which can handle " + request);
-    }
-
-    private Object process(Protocol protocol, Object request, DetachedConnection connection) {
+    private Object process(XmlRpcCall call) {
+        // TODO scope, event, clear
         try {
-            LOG.trace("Processing request of type {} using {}", request.getClass(), protocol);
-            return protocol.process(request, connection);
-        } catch (ProtocolException e) {
-            LOG.warn("Error in protocol", e);
-            return protocol.onError(e, request);
+            return executor.execute(call.getMethodName(), call);
         /* CHECKSTYLE:OFF */
         } catch (RuntimeException e) {
         /* CHECKSTYLE:ON */
             LOG.error("Unexpected exception in protocol", e);
-            return protocol.onError(e, request);
+            final Document document = builder.newDocument();
+            Error.set(document, e);
+            return document;
+        } catch (IpcCommandExecutionException e) {
+            LOG.error("Exception in protocol", e);
+            final Document document = builder.newDocument();
+            Error.set(document, e);
+            return document;
         }
     }
     
@@ -159,9 +146,4 @@ final class XmlRpcHandler extends SimpleChannelHandler implements Initializable,
         channel.close();
     }
 
-    @Override
-    public void dispose() throws LifecycleException {
-        mBeanService.unregister(this);
-    }
-    
 }

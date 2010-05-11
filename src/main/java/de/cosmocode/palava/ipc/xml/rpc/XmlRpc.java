@@ -63,6 +63,10 @@ public @interface XmlRpc {
     
     String BOOLEAN = "boolean";
     
+    String TRUE = "1";
+    
+    String FALSE = "0";
+    
     String STRING = "string";
     
     String DOUBLE = "double";

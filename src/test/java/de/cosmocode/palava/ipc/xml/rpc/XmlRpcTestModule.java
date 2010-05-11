@@ -27,18 +27,17 @@ import com.google.inject.Binder;
 import com.google.inject.Module;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
-import com.google.inject.multibindings.Multibinder;
 
 import de.cosmocode.palava.concurrent.DefaultThreadProviderModule;
 import de.cosmocode.palava.concurrent.ExecutorModule;
 import de.cosmocode.palava.core.DefaultRegistryModule;
 import de.cosmocode.palava.core.inject.TypeConverterModule;
 import de.cosmocode.palava.core.lifecycle.LifecycleModule;
+import de.cosmocode.palava.ipc.DefaultIpcCallFilterChainFactoryModule;
+import de.cosmocode.palava.ipc.command.localvm.LocalIpcCommandExecutorModule;
 import de.cosmocode.palava.ipc.netty.Boss;
 import de.cosmocode.palava.ipc.netty.NettyModule;
 import de.cosmocode.palava.ipc.netty.Worker;
-import de.cosmocode.palava.ipc.protocol.EchoProtocol;
-import de.cosmocode.palava.ipc.protocol.Protocol;
 import de.cosmocode.palava.ipc.xml.XmlNettyModule;
 import de.cosmocode.palava.jmx.FakeMBeanServerModule;
 
@@ -59,10 +58,12 @@ public final class XmlRpcTestModule implements Module {
         binder.install(new ExecutorModule(Boss.class, Boss.NAME));
         binder.install(new ExecutorModule(Worker.class, Worker.NAME));
         binder.install(new DefaultThreadProviderModule());
+        binder.install(new LocalIpcCommandExecutorModule());
+        binder.install(new DefaultIpcCallFilterChainFactoryModule());
         binder.install(new NettyModule());
         binder.install(new XmlNettyModule());
         binder.install(new XmlRpcNettyModule());
-        Multibinder.newSetBinder(binder, Protocol.class).addBinding().to(EchoProtocol.class);
+        binder.install(new XmlRpcModule());
     }
 
     /**

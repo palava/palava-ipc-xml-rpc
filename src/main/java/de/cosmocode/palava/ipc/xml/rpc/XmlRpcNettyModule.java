@@ -42,7 +42,6 @@ public final class XmlRpcNettyModule implements Module {
         binder.bind(XmlRpcDecoder.class).in(Singleton.class);
         binder.bind(XmlRpcEncoder.class).in(Singleton.class);
         binder.bind(XmlRpcHandler.class).in(Singleton.class);
-        binder.bind(XmlRpcProtocol.class).asEagerSingleton();
     }
     
     /**
@@ -82,20 +81,6 @@ public final class XmlRpcNettyModule implements Module {
             }
             
         };
-    }
-    
-    /**
-     * Provides all xml protocols.
-     * 
-     * @since 1.0 
-     * @param registry the current registry
-     * @return iterable of xml protocols
-     */
-    @Provides
-    @Singleton
-    @XmlRpc
-    Iterable<Protocol> provideProtocols(Registry registry) {
-        return registry.find(Protocol.class, XmlRpc.OR_ANY);
     }
     
 }
