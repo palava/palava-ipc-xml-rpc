@@ -43,7 +43,7 @@ import de.cosmocode.palava.ipc.IpcCommandExecutionException;
 import de.cosmocode.palava.ipc.IpcCommandExecutor;
 import de.cosmocode.palava.ipc.IpcConnectionCreateEvent;
 import de.cosmocode.palava.ipc.IpcConnectionDestroyEvent;
-import de.cosmocode.palava.ipc.protocol.DefaultDetachedConnection;
+import de.cosmocode.palava.ipc.netty.ChannelConnection;
 import de.cosmocode.palava.ipc.protocol.DetachedConnection;
 
 
@@ -77,8 +77,9 @@ final class XmlRpcHandler extends SimpleChannelHandler {
     
     @Override
     public void channelConnected(ChannelHandlerContext context, ChannelStateEvent event) throws Exception {
-        final DetachedConnection connection = new DefaultDetachedConnection();
-        connections.put(event.getChannel(), connection);
+        final Channel channel = event.getChannel();
+        final DetachedConnection connection = new ChannelConnection(channel);
+        connections.put(channel, connection);
         
         registry.notify(IpcConnectionCreateEvent.class, new Procedure<IpcConnectionCreateEvent>() {
            
