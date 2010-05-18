@@ -16,33 +16,20 @@
 
 package de.cosmocode.palava.ipc.xml.rpc;
 
-import org.w3c.dom.Node;
+import org.jboss.netty.channel.Channel;
+import org.jboss.netty.channel.ChannelHandlerContext;
+import org.jboss.netty.handler.codec.oneone.OneToOneEncoder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import com.google.inject.Inject;
+final class MethodResponseParamsEncoder extends OneToOneEncoder {
 
-import de.cosmocode.palava.core.Registry;
-
-/**
- * {@link NodeConverter} for {@link String}s.
- *
- * @since 1.0
- * @author Willi Schoenborn
- */
-final class StringConverter extends AbstractNodeConverter {
-
-    @Inject
-    public StringConverter(Registry registry) {
-        super(registry);
-    }
+    private static final Logger LOG = LoggerFactory.getLogger(MethodResponseParamsEncoder.class);
 
     @Override
-    protected String supportedNodeName() {
-        return XmlRpc.STRING;
-    }
-
-    @Override
-    public Object convert(Node value, NodeConverter converter) {
-        return value.getFirstChild().getTextContent();
+    protected Object encode(ChannelHandlerContext ctx, Channel channel, Object msg) throws Exception {
+        // TODO Auto-generated method stub
+        return null;
     }
 
 }

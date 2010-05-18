@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Copyright 2010 CosmoCode GmbH
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <xsd:element name="methodCall">
+    <xsd:complexType>
+      <xsd:all>
+        <xsd:element name="methodName" minOccurs="1" maxOccurs="1">
+          <xsd:simpleType>
+            <xsd:restriction base="xsd:string">
+              <xsd:pattern value="([A-Za-z0-9]|/|\.|:|_)*" />
+            </xsd:restriction>
+          </xsd:simpleType>
+        </xsd:element>
+        <xsd:element name="params" minOccurs="0" maxOccurs="1">
+          <xsd:complexType>
+            <xsd:sequence>
+              <xsd:element name="param"  type="param" minOccurs="0" maxOccurs="unbounded"/>
+            </xsd:sequence>
+          </xsd:complexType>
+         </xsd:element>
+      </xsd:all>
+    </xsd:complexType>  
+  </xsd:element>
+  <xsd:element name="methodResponse">
+    <xsd:complexType>
+      <xsd:choice>
+        <xsd:element name="params" minOccurs="1" maxOccurs="1">
+          <xsd:complexType>
+            <xsd:sequence>
+              <xsd:element name="param"  type="param" minOccurs="1" maxOccurs="1"/>
+            </xsd:sequence>
+          </xsd:complexType>
+        </xsd:element>
+        <xsd:element name="fault">
+          <xsd:complexType>
+            <xsd:sequence>
+              <xsd:element name="value">
+                <xsd:complexType>
+                  <xsd:sequence>
+                    <xsd:element name="struct"> 
+                      <xsd:complexType> 
+                        <xsd:sequence> 
+                          <xsd:element name="member" type="member" minOccurs="1" maxOccurs="1"/>
+                          <xsd:element name="member" type="member" minOccurs="1" maxOccurs="1"/>
+                        </xsd:sequence>
+                      </xsd:complexType>
+                    </xsd:element>
+                  </xsd:sequence>
+                </xsd:complexType>
+              </xsd:element>
+            </xsd:sequence>
+          </xsd:complexType>
+         </xsd:element>
+      </xsd:choice>
+    </xsd:complexType>  
+  </xsd:element>
+  <xsd:complexType name="param">
+    <xsd:sequence>
+      <xsd:element name="value" type="value" minOccurs="1" maxOccurs="1" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="value" abstract="true">
+    <xsd:sequence/>
+  </xsd:complexType>
+  <xsd:complexType name="boolean">
+    <xsd:complexContent>
+      <xsd:extension base="value">
+        <xsd:sequence>
+          <xsd:element name="boolean" type="xsd:boolean"/>
+        </xsd:sequence>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:complexType name="i4">
+    <xsd:complexContent>
+      <xsd:extension base="value">
+        <xsd:sequence>
+          <xsd:element name="i4" type="xsd:int"/>
+        </xsd:sequence>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:complexType name="int">
+    <xsd:complexContent>
+      <xsd:extension base="value">
+        <xsd:sequence>
+          <xsd:element name="int" type="xsd:int"/>
+        </xsd:sequence>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:complexType name="double">
+    <xsd:complexContent>
+      <xsd:extension base="value">
+        <xsd:sequence>
+          <xsd:element name="double" type="xsd:decimal"/>
+        </xsd:sequence>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:complexType name="string">
+    <xsd:complexContent>
+      <xsd:extension base="value">
+        <xsd:sequence>
+          <!-- TODO add pattern restriction ([ -~]|\n|\r|\t)* -->
+          <xsd:element name="string" type="xsd:string"/>
+        </xsd:sequence>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:complexType name="base64">
+    <xsd:complexContent>
+      <xsd:extension base="value">
+        <xsd:sequence>
+          <!-- TODO add pattern restriction 0|1 -->
+          <xsd:element name="base64" type="xsd:base64Binary"/>
+        </xsd:sequence>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:complexType name="dateTime.iso8601">
+    <xsd:complexContent>
+      <xsd:extension base="value">
+        <xsd:sequence>
+          <xsd:element name="dateTime.iso8601" type="xsd:dateTime"/>
+        </xsd:sequence>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:complexType name="struct">
+    <xsd:complexContent>
+      <xsd:extension base="value">
+        <xsd:sequence>
+          <xsd:element name="member" type="member" minOccurs="0" maxOccurs="unbounded"/>
+        </xsd:sequence>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:complexType name="member">
+    <xsd:sequence>
+      <xsd:element name="name" type="xsd:string" />
+      <xsd:element name="value" type="value"/>
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="array">
+    <xsd:complexContent>
+      <xsd:extension base="value">
+        <xsd:sequence>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value"  type="value" minOccurs="0" maxOccurs="unbounded"/>
+              </xsd:sequence>
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:sequence>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+</xsd:schema>

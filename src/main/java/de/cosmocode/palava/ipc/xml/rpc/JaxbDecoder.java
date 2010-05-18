@@ -16,53 +16,47 @@
 
 package de.cosmocode.palava.ipc.xml.rpc;
 
-import java.util.List;
-import java.util.Map;
+import java.io.InputStream;
 
 import javax.annotation.concurrent.ThreadSafe;
-import javax.xml.parsers.DocumentBuilder;
+import javax.xml.bind.JAXBElement;
+import javax.xml.bind.Unmarshaller;
 
+import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.ChannelHandler.Sharable;
-import org.jboss.netty.handler.codec.oneone.OneToOneEncoder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.w3c.dom.Document;
+import org.jboss.netty.handler.codec.oneone.OneToOneDecoder;
 
 import com.google.common.base.Preconditions;
-import com.google.inject.Inject;
+
+import de.cosmocode.palava.ipc.netty.ChannelBuffering;
 
 /**
- * Encoder which encodes {@link Map}s/{@link List}s into xml-rpc {@link Document}s.
+ * Decoder which decodes {@link ChannelBuffer}s into {@link JAXBElement}s.
  *
  * @since 1.0
  * @author Willi Schoenborn
  */
 @Sharable
 @ThreadSafe
-final class XmlRpcEncoder extends OneToOneEncoder {
+final class JaxbDecoder extends OneToOneDecoder {
 
-    private static final Logger LOG = LoggerFactory.getLogger(XmlRpcEncoder.class);
-
-    private final DocumentBuilder builder;
+    private final Unmarshaller unmarshaller;
     
-    @Inject
-    public XmlRpcEncoder(DocumentBuilder builder) {
-        this.builder = Preconditions.checkNotNull(builder, "Builder");
+    public JaxbDecoder(@XmlRpc Unmarshaller unmarshaller) {
+        this.unmarshaller = Preconditions.checkNotNull(unmarshaller, "Unmarshaller");
     }
-    
+
     @Override
-    protected Object encode(ChannelHandlerContext context, Channel channel, Object message) throws Exception {
-        if (message instanceof Map<?, ?> || message instanceof List<?>) {
-            final Document document = builder.newDocument();
-            // TODO implement
-            
-            
-            return document;
+    protected Object decode(ChannelHandlerContext context, Channel channel, Object message) throws Exception {
+        if (message instanceof ChannelBuffer) {
+            final ChannelBuffer buffer = ChannelBuffer.class.cast(message);
+            final InputStream stream = ChannelBuffering.asInputStream(buffer);
+            return unmarshaller.unmarshal(stream);
         } else {
             return message;
         }
     }
-
+    
 }

@@ -19,7 +19,6 @@ package de.cosmocode.palava.ipc.xml.rpc;
 import java.util.concurrent.ConcurrentMap;
 
 import javax.annotation.concurrent.ThreadSafe;
-import javax.xml.parsers.DocumentBuilder;
 
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelHandler;
@@ -31,21 +30,22 @@ import org.jboss.netty.channel.SimpleChannelHandler;
 import org.jboss.netty.channel.ChannelHandler.Sharable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.w3c.dom.Document;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.MapMaker;
 import com.google.inject.Inject;
 
-import de.cosmocode.collections.Procedure;
-import de.cosmocode.palava.core.Registry;
+import de.cosmocode.palava.core.Registry.Proxy;
+import de.cosmocode.palava.core.Registry.SilentProxy;
+import de.cosmocode.palava.ipc.IpcCallCreateEvent;
+import de.cosmocode.palava.ipc.IpcCallDestroyEvent;
+import de.cosmocode.palava.ipc.IpcCallScope;
 import de.cosmocode.palava.ipc.IpcCommandExecutionException;
 import de.cosmocode.palava.ipc.IpcCommandExecutor;
 import de.cosmocode.palava.ipc.IpcConnectionCreateEvent;
 import de.cosmocode.palava.ipc.IpcConnectionDestroyEvent;
 import de.cosmocode.palava.ipc.netty.ChannelConnection;
 import de.cosmocode.palava.ipc.protocol.DetachedConnection;
-
 
 /**
  * A {@link ChannelHandler} which processes incoming xml
@@ -62,17 +62,31 @@ final class XmlRpcHandler extends SimpleChannelHandler {
     
     private final ConcurrentMap<Channel, DetachedConnection> connections = new MapMaker().makeMap();
     
-    private final Registry registry;
-    
     private IpcCommandExecutor executor;
     
-    private final DocumentBuilder builder;
+    private final IpcConnectionCreateEvent connectionCreateEvent;
+    
+    private final IpcConnectionDestroyEvent connectionDestroyEvent;
+    
+    private final IpcCallCreateEvent callCreateEvent;
+    
+    private final IpcCallDestroyEvent callDestroyEvent;
+    
+    private final IpcCallScope scope;
     
     @Inject
-    public XmlRpcHandler(Registry registry, IpcCommandExecutor executor, DocumentBuilder builder) {
-        this.registry = Preconditions.checkNotNull(registry, "Registry");
+    public XmlRpcHandler(IpcCommandExecutor executor,
+        @Proxy IpcConnectionCreateEvent connectionCreateEvent,
+        @SilentProxy IpcConnectionDestroyEvent connectionDestroyEvent,
+        @Proxy IpcCallCreateEvent callCreateEvent, 
+        @SilentProxy IpcCallDestroyEvent callDestroyEvent,
+        IpcCallScope scope) {
         this.executor = Preconditions.checkNotNull(executor, "Executor");
-        this.builder = Preconditions.checkNotNull(builder, "Builder");
+        this.connectionCreateEvent = Preconditions.checkNotNull(connectionCreateEvent, "ConnectionCreateEvent");
+        this.connectionDestroyEvent = Preconditions.checkNotNull(connectionDestroyEvent, "ConnectionDestroyEvent");
+        this.callCreateEvent = Preconditions.checkNotNull(callCreateEvent, "CallCreateEvent");
+        this.callDestroyEvent = Preconditions.checkNotNull(callDestroyEvent, "CallDestroyEvent");
+        this.scope = Preconditions.checkNotNull(scope, "Scope");
     }
     
     @Override
@@ -80,15 +94,7 @@ final class XmlRpcHandler extends SimpleChannelHandler {
         final Channel channel = event.getChannel();
         final DetachedConnection connection = new ChannelConnection(channel);
         connections.put(channel, connection);
-        
-        registry.notify(IpcConnectionCreateEvent.class, new Procedure<IpcConnectionCreateEvent>() {
-           
-            @Override
-            public void apply(IpcConnectionCreateEvent input) {
-                input.eventIpcConnectionCreate(connection);
-            }
-            
-        });
+        connectionCreateEvent.eventIpcConnectionCreate(connection);
     }
     
     @Override
@@ -105,46 +111,39 @@ final class XmlRpcHandler extends SimpleChannelHandler {
         }
     }
     
-    private Object process(XmlRpcCall call) {
-        // TODO scope, event, clear
+    private Object process(XmlRpcCall call) throws IpcCommandExecutionException {
+        callCreateEvent.eventIpcCallCreate(call);
+        scope.enter(call);
         try {
             return executor.execute(call.getMethodName(), call);
         /* CHECKSTYLE:OFF */
         } catch (RuntimeException e) {
         /* CHECKSTYLE:ON */
-            LOG.error("Unexpected exception in protocol", e);
-            final Document document = builder.newDocument();
-            Error.set(document, e);
-            return document;
-        } catch (IpcCommandExecutionException e) {
-            LOG.error("Exception in protocol", e);
-            final Document document = builder.newDocument();
-            Error.set(document, e);
-            return document;
+            throw new IpcCommandExecutionException(e);
+        } finally {
+            callDestroyEvent.eventIpcCallDestroy(call);
+            scope.exit();
+            call.clear();
         }
     }
     
     @Override
     public void channelClosed(ChannelHandlerContext context, ChannelStateEvent event) throws Exception {
         final DetachedConnection connection = connections.remove(event.getChannel());
-        
-        registry.notifySilent(IpcConnectionDestroyEvent.class, new Procedure<IpcConnectionDestroyEvent>() {
-            
-            @Override
-            public void apply(IpcConnectionDestroyEvent input) {
-                input.eventIpcConnectionDestroy(connection);
-            }
-            
-        });
-        
+        connectionDestroyEvent.eventIpcConnectionDestroy(connection);
         connection.clear();
     }
     
     @Override
     public void exceptionCaught(ChannelHandlerContext context, ExceptionEvent event) throws Exception {
+        final Throwable cause = event.getCause();
         final Channel channel = event.getChannel();
-        LOG.error("Exception in channel " + channel, event.getCause());
-        channel.close();
+        LOG.error("Exception in channel " + channel, cause);
+        if (cause instanceof IpcCommandExecutionException) {
+            channel.write(cause);
+        } else {
+            channel.close();
+        }
     }
 
 }

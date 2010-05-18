@@ -14,35 +14,29 @@
  * limitations under the License.
  */
 
-package de.cosmocode.palava.ipc.xml.rpc;
+package de.cosmocode.palava.ipc.xml.rpc.generated.runtime;
 
-import org.w3c.dom.Node;
-
-import com.google.inject.Inject;
-
-import de.cosmocode.palava.core.Registry;
+import javax.xml.bind.DatatypeConverter;
+import javax.xml.bind.annotation.adapters.XmlAdapter;
 
 /**
- * {@link NodeConverter} for {@link Integer}s.
+ * Serializes <tt>boolean</tt> as 0 or 1.
  *
- * @since 1.0
- * @author Willi Schoenborn
+ * @author Kohsuke Kawaguchi
+ * @since 2.0
  */
-final class I4Converter extends AbstractNodeConverter {
-
-    @Inject
-    public I4Converter(Registry registry) {
-        super(registry);
+public class ZeroOneBooleanAdapter extends XmlAdapter<String,Boolean> {
+    public Boolean unmarshal(String v) {
+        if(v==null)     return null;
+        return DatatypeConverter.parseBoolean(v);
     }
 
-    @Override
-    protected String supportedNodeName() {
-        return XmlRpc.INT;
+    public String marshal(Boolean v) {
+        if(v==null)     return null;
+        if(v) {
+            return "1";
+        } else {
+            return "0";
+        }
     }
-    
-    @Override
-    public Object convert(Node value, NodeConverter converter) {
-        return Integer.parseInt(value.getFirstChild().getTextContent());
-    }
-
 }

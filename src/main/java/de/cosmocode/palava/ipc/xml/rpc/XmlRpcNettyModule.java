@@ -39,8 +39,8 @@ public final class XmlRpcNettyModule implements Module {
 
     @Override
     public void configure(Binder binder) {
-        binder.bind(XmlRpcDecoder.class).in(Singleton.class);
-        binder.bind(XmlRpcEncoder.class).in(Singleton.class);
+        binder.bind(JaxbDecoder.class).in(Singleton.class);
+        binder.bind(JaxbEncoder.class).in(Singleton.class);
         binder.bind(XmlRpcHandler.class).in(Singleton.class);
     }
     
@@ -55,8 +55,8 @@ public final class XmlRpcNettyModule implements Module {
      * @return a new {@link ChannelPipeline}
      */
     @Provides
-    ChannelPipeline provideChannelPipeline(@Xml ChannelPipeline pipeline, XmlRpcDecoder rpcDecoder, 
-        XmlRpcEncoder rpcEncoder, XmlRpcHandler handler) {
+    ChannelPipeline provideChannelPipeline(@Xml ChannelPipeline pipeline, JaxbDecoder rpcDecoder, 
+        JaxbEncoder rpcEncoder, XmlRpcHandler handler) {
         pipeline.addLast("rpc-decoder", rpcDecoder);
         pipeline.addLast("rpc-encoder", rpcEncoder);
         pipeline.addLast("rpc-handler", handler);
