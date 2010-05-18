@@ -36,7 +36,7 @@ import de.cosmocode.palava.core.lifecycle.LifecycleModule;
 import de.cosmocode.palava.ipc.DefaultIpcCallFilterChainFactoryModule;
 import de.cosmocode.palava.ipc.command.localvm.LocalIpcCommandExecutorModule;
 import de.cosmocode.palava.ipc.netty.Boss;
-import de.cosmocode.palava.ipc.netty.NettyModule;
+import de.cosmocode.palava.ipc.netty.NettyServiceModule;
 import de.cosmocode.palava.ipc.netty.Worker;
 import de.cosmocode.palava.ipc.xml.XmlNettyModule;
 import de.cosmocode.palava.jmx.FakeMBeanServerModule;
@@ -60,7 +60,7 @@ public final class XmlRpcTestModule implements Module {
         binder.install(new DefaultThreadProviderModule());
         binder.install(new LocalIpcCommandExecutorModule());
         binder.install(new DefaultIpcCallFilterChainFactoryModule());
-        binder.install(new NettyModule());
+        binder.install(new NettyServiceModule());
         binder.install(new XmlNettyModule());
         binder.install(new XmlRpcNettyModule());
         binder.install(new XmlRpcModule());
