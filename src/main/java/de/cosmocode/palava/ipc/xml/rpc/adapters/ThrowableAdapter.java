@@ -21,10 +21,10 @@ import com.google.inject.Inject;
 import com.google.inject.TypeLiteral;
 
 import de.cosmocode.palava.ipc.xml.rpc.XmlRpc;
-import de.cosmocode.palava.ipc.xml.rpc.generated.I4;
 import de.cosmocode.palava.ipc.xml.rpc.generated.Member;
 import de.cosmocode.palava.ipc.xml.rpc.generated.ObjectFactory;
-import de.cosmocode.palava.ipc.xml.rpc.generated.String;
+import de.cosmocode.palava.ipc.xml.rpc.generated.Value;
+import de.cosmocode.palava.ipc.xml.rpc.generated.MethodResponse.Fault;
 import de.cosmocode.palava.ipc.xml.rpc.generated.MethodResponse.Fault.Value.Struct;
 
 /**
@@ -33,42 +33,44 @@ import de.cosmocode.palava.ipc.xml.rpc.generated.MethodResponse.Fault.Value.Stru
  * @since 1.0
  * @author Willi Schoenborn
  */
-final class StructThrowableAdapter implements Adapter<Struct, Throwable> {
+final class ThrowableAdapter implements Adapter<Fault.Value, Throwable> {
 
-    static final TypeLiteral<Adapter<Struct, Throwable>> LITERAL =
-        new TypeLiteral<Adapter<Struct, Throwable>>() { };
+    static final TypeLiteral<Adapter<Fault.Value, Throwable>> LITERAL =
+        new TypeLiteral<Adapter<Fault.Value, Throwable>>() { };
 
     private final ObjectFactory factory;
     
     @Inject
-    public StructThrowableAdapter(@XmlRpc ObjectFactory factory) {
+    public ThrowableAdapter(@XmlRpc ObjectFactory factory) {
         this.factory = Preconditions.checkNotNull(factory, "Factory");
     }
 
     @Override
-    public Throwable decode(Struct input) {
+    public Throwable decode(Fault.Value input) {
         throw new UnsupportedOperationException();
     }
     
     @Override
-    public Struct encode(Throwable throwable) {
+    public Fault.Value encode(Throwable throwable) {
+        final Fault.Value value = factory.createMethodResponseFaultValue();
         final Struct struct = factory.createMethodResponseFaultValueStruct();
+        value.setStruct(struct);
         
         final Member faultCode = factory.createMember();
         faultCode.setName(XmlRpc.FAULT_CODE);
-        final I4 code = factory.createI4();
+        final Value code = factory.createValue();
         code.setI4(throwable.hashCode());
         faultCode.setValue(code);
-        struct.getContent().add(factory.createMethodResponseFaultValueStructMember(faultCode));
+        struct.getMember().add(faultCode);
         
         final Member faultString = factory.createMember();
         faultString.setName(XmlRpc.FAULT_STRING);
-        final String string = factory.createString();
+        final Value string = factory.createValue();
         string.setString(throwable.toString());
         faultString.setValue(string);
-        struct.getContent().add(factory.createMethodResponseFaultValueStructMember(faultString));
+        struct.getMember().add(faultString);
         
-        return struct;
+        return value;
     }
     
 }

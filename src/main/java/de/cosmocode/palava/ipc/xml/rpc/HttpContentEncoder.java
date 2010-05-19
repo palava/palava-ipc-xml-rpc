@@ -16,49 +16,36 @@
 
 package de.cosmocode.palava.ipc.xml.rpc;
 
-import java.io.OutputStream;
-
 import javax.annotation.concurrent.ThreadSafe;
-import javax.xml.bind.Marshaller;
 
 import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.ChannelHandler.Sharable;
+import org.jboss.netty.handler.codec.http.DefaultHttpResponse;
+import org.jboss.netty.handler.codec.http.HttpResponse;
+import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import org.jboss.netty.handler.codec.http.HttpVersion;
 import org.jboss.netty.handler.codec.oneone.OneToOneEncoder;
 
-import com.google.common.base.Preconditions;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-
-import de.cosmocode.palava.ipc.netty.ChannelBuffering;
-import de.cosmocode.palava.ipc.xml.rpc.generated.MethodResponse;
-
 /**
- * Encoder which encodes {@link MethodResponse}s into {@link ChannelBuffer}s.
+ * Encodes {@link ChannelBuffer}s into {@link HttpResponse}s.
  *
  * @since 1.0
  * @author Willi Schoenborn
  */
 @Sharable
 @ThreadSafe
-final class JaxbEncoder extends OneToOneEncoder {
+final class HttpContentEncoder extends OneToOneEncoder {
 
-    private final Provider<Marshaller> marshaller;
-    
-    @Inject
-    public JaxbEncoder(@XmlRpc Provider<Marshaller> marshaller) {
-        this.marshaller = Preconditions.checkNotNull(marshaller, "Marshaller");
-    }
-    
     @Override
     protected Object encode(ChannelHandlerContext context, Channel channel, Object message) throws Exception {
-        if (message instanceof MethodResponse) {
-            final ChannelBuffer buffer = ChannelBuffers.dynamicBuffer();
-            final OutputStream stream = ChannelBuffering.asOutputStream(buffer);
-            marshaller.get().marshal(message, stream);
-            return buffer;
+        if (message instanceof ChannelBuffer) {
+            final ChannelBuffer content = ChannelBuffer.class.cast(message);
+            final HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
+            response.setContent(content);
+            response.setHeader("Content-Type", "text/xml");
+            return response;
         } else {
             return message;
         }

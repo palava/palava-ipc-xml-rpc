@@ -18,20 +18,16 @@
 -->
 
 <methodCall xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../main/resources/xmlrpc.xsd">
-  <methodName>methodName</methodName>
+  <methodName>de.cosmocode.palava.ipc.xml.rpc.Echo</methodName>
   <params>
     <param>
       <value>
-        <struct>
-          <member>
-            <name>test</name>
-            <value><string>test</string></value>
-          </member>
-          <member>
-            <name>test2</name>
-            <value><boolean>1</boolean></value>
-          </member>
-        </struct>
+        <string>de.cosmocode.palava.ipc.xml.rpc.Echo</string>
+      </value>
+    </param>
+    <param>
+      <value>
+        <boolean>1</boolean>
       </value>
     </param>
   </params>

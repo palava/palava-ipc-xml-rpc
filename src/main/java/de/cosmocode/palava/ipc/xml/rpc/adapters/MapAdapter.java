@@ -34,6 +34,7 @@ import de.cosmocode.palava.ipc.xml.rpc.XmlRpc;
 import de.cosmocode.palava.ipc.xml.rpc.generated.Member;
 import de.cosmocode.palava.ipc.xml.rpc.generated.ObjectFactory;
 import de.cosmocode.palava.ipc.xml.rpc.generated.Struct;
+import de.cosmocode.palava.ipc.xml.rpc.generated.Value;
 
 /**
  * A {@link Struct} to {@link Object} adapter.
@@ -41,72 +42,61 @@ import de.cosmocode.palava.ipc.xml.rpc.generated.Struct;
  * @since 1.0
  * @author Willi Schoenborn
  */
-final class StructMapAdapter implements Adapter<Struct, Map<String, Object>> {
+final class MapAdapter implements Adapter<Value, Map<String, Object>> {
 
-    static final TypeLiteral<Adapter<Struct, Map<String, Object>>> LITERAL =
-        new TypeLiteral<Adapter<Struct, Map<String, Object>>>() { };
+    static final TypeLiteral<Adapter<Value, Map<String, Object>>> LITERAL =
+        new TypeLiteral<Adapter<Value, Map<String, Object>>>() { };
 
     private final ObjectFactory factory;
     private final Adapter<Member, Entry<String, Object>> entryAdapter;
+    private final Function<Member, Entry<String, Object>> entryDecoder;
     
     @Inject
-    public StructMapAdapter(@XmlRpc ObjectFactory factory, Adapter<Member, Entry<String, Object>> entryAdapter) {
+    public MapAdapter(@XmlRpc ObjectFactory factory, Adapter<Member, Entry<String, Object>> entryAdapter) {
         this.factory = Preconditions.checkNotNull(factory, "Factory");
         this.entryAdapter = Preconditions.checkNotNull(entryAdapter, "EntryAdapter");
+        this.entryDecoder = Adapters.asDecoder(entryAdapter);
     }
 
     @Override
-    public Map<String, Object> decode(Struct input) {
+    public Map<String, Object> decode(Value input) {
         Preconditions.checkNotNull(input, "Input");
-        return new StructMap(input.getMember(), entryAdapter);
-    }
-    
-    /**
-     * {@link List} of {@link Member} backed {@link Map} implementation.
-     *
-     * @since 1.0
-     * @author Willi Schoenborn
-     */
-    private static final class StructMap extends AbstractMap<String, Object> {
-        
-        private final List<Member> members;
-        private final Function<Member, Entry<String, Object>> function;
-        
-        public StructMap(List<Member> members, Adapter<Member, Entry<String, Object>> entryAdapter) {
-            this.members = members;
-            this.function = Adapters.asDecodeFunction(entryAdapter);
-        }
+        final List<Member> members = input.getStruct().getMember();
+        return new AbstractMap<String, Object>() {
 
-        @Override
-        public Set<Entry<String, Object>> entrySet() {
-            return new AbstractSet<Entry<String, Object>>() {
+            @Override
+            public Set<Entry<String, Object>> entrySet() {
+                return new AbstractSet<Entry<String, Object>>() {
 
-                @Override
-                public Iterator<Entry<String, Object>> iterator() {
-                    return Iterators.unmodifiableIterator(Iterators.transform(members.iterator(), function));
-                }
+                    @Override
+                    public Iterator<Entry<String, Object>> iterator() {
+                        return Iterators.unmodifiableIterator(Iterators.transform(members.iterator(), entryDecoder));
+                    }
 
-                @Override
-                public int size() {
-                    return members.size();
-                }
-                
-            };
-        }
-        
+                    @Override
+                    public int size() {
+                        return members.size();
+                    }
+                    
+                };
+            }
+            
+        };
     }
     
     @Override
-    public Struct encode(Map<String, Object> input) {
+    public Value encode(Map<String, Object> input) {
         Preconditions.checkNotNull(input, "Input");
+        final Value value = factory.createValue();
         final Struct struct = factory.createStruct();
+        value.setStruct(struct);
         
         for (Entry<String, Object> entry : input.entrySet()) {
             final Member member = entryAdapter.encode(entry);
             struct.getMember().add(member);
         }
         
-        return struct;
+        return value;
     }
     
 }

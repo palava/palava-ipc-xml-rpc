@@ -16,67 +16,72 @@
 
 package de.cosmocode.palava.ipc.xml.rpc.adapters;
 
-import java.util.Map.Entry;
+import java.util.AbstractList;
+import java.util.List;
 
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import com.google.inject.TypeLiteral;
 
 import de.cosmocode.palava.ipc.xml.rpc.XmlRpc;
-import de.cosmocode.palava.ipc.xml.rpc.generated.Member;
+import de.cosmocode.palava.ipc.xml.rpc.generated.Array;
 import de.cosmocode.palava.ipc.xml.rpc.generated.ObjectFactory;
 import de.cosmocode.palava.ipc.xml.rpc.generated.Value;
+import de.cosmocode.palava.ipc.xml.rpc.generated.Array.Data;
 
 /**
- * A {@link Member} to {@link Entry} adapter.
+ * An {@link Array} to {@link List} adapter.
  *
  * @since 1.0
  * @author Willi Schoenborn
  */
-final class MemberEntryAdapter implements Adapter<Member, Entry<String, Object>> {
+final class ListAdapter implements Adapter<Value, List<Object>> {
 
-    static final TypeLiteral<Adapter<Member, Entry<String, Object>>> LITERAL =
-        new TypeLiteral<Adapter<Member, Entry<String, Object>>>() { };
-    
+    static final TypeLiteral<Adapter<Value, List<Object>>> LITERAL =
+        new TypeLiteral<Adapter<Value, List<Object>>>() { };
+        
     private final ObjectFactory factory;
     private final Adapter<Value, Object> objectAdapter;
     
     @Inject
-    public MemberEntryAdapter(@XmlRpc ObjectFactory factory, Adapter<Value, Object> objectAdapter) {
+    public ListAdapter(@XmlRpc ObjectFactory factory, Adapter<Value, Object> objectAdapter) {
         this.factory = Preconditions.checkNotNull(factory, "Factory");
         this.objectAdapter = Preconditions.checkNotNull(objectAdapter, "ObjectAdapter");
     }
-    
+
     @Override
-    public Entry<String, Object> decode(final Member input) {
+    public List<Object> decode(Value input) {
         Preconditions.checkNotNull(input, "Input");
-        return new Entry<String, Object>() {
-            
+        final List<Value> values = input.getArray().getData().getValue();
+        return new AbstractList<Object>() {
+
             @Override
-            public String getKey() {
-                return input.getName();
+            public Object get(int index) {
+                return objectAdapter.decode(values.get(index));
             }
-            
+
             @Override
-            public Object getValue() {
-                return objectAdapter.decode(input.getValue());
-            }
-            
-            @Override
-            public Object setValue(Object value) {
-                throw new UnsupportedOperationException();
+            public int size() {
+                return values.size();
             }
             
         };
     }
     
     @Override
-    public Member encode(Entry<String, Object> input) {
+    public Value encode(List<Object> input) {
         Preconditions.checkNotNull(input, "Input");
-        final Member member = factory.createMember();
-        member.setName(input.getKey());
-        member.setValue(objectAdapter.encode(input.getValue()));
-        return member;
+        final Value value = factory.createValue();
+        final Array array = factory.createArray();
+        value.setArray(array);
+        final Data data = factory.createArrayData();
+        array.setData(data);
+        
+        for (Object object : input) {
+            data.getValue().add(objectAdapter.encode(object));
+        }
+        
+        return value;
     }
     
 }

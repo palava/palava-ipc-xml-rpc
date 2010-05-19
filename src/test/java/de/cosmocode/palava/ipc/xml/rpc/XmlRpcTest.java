@@ -16,6 +16,8 @@
 
 package de.cosmocode.palava.ipc.xml.rpc;
 
+import java.util.concurrent.TimeUnit;
+
 import org.junit.Test;
 
 import de.cosmocode.palava.core.Framework;
@@ -31,11 +33,16 @@ public final class XmlRpcTest {
 
     /**
      * Tests framework start.
+     * 
+     * @throws InterruptedException should not happen
      */
     @Test
-    public void boot() {
+    public void boot() throws InterruptedException {
         final Framework framework = Palava.newFramework();
         framework.start();
+        
+        Thread.sleep(TimeUnit.SECONDS.toMillis(30));
+        
         framework.stop();
     }
     

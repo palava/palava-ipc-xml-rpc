@@ -37,7 +37,6 @@ import de.cosmocode.palava.ipc.xml.rpc.generated.Param;
 import de.cosmocode.palava.ipc.xml.rpc.generated.Value;
 import de.cosmocode.palava.ipc.xml.rpc.generated.MethodResponse.Fault;
 import de.cosmocode.palava.ipc.xml.rpc.generated.MethodResponse.Params;
-import de.cosmocode.palava.ipc.xml.rpc.generated.MethodResponse.Fault.Value.Struct;
 
 /**
  * An encoder which encodes {@link Map}s into {@link MethodResponse}s.
@@ -53,11 +52,11 @@ final class MethodResponseEncoder extends OneToOneEncoder {
     
     private final ObjectFactory factory;
     private final Adapter<Value, Object> objectAdapter;
-    private final Adapter<Struct, Throwable> throwableAdapter;
+    private final Adapter<Fault.Value, Throwable> throwableAdapter;
     
     @Inject
     public MethodResponseEncoder(@XmlRpc ObjectFactory factory, 
-        Adapter<Value, Object> objectAdapter, Adapter<Struct, Throwable> throwableAdapter) {
+        Adapter<Value, Object> objectAdapter, Adapter<Fault.Value, Throwable> throwableAdapter) {
         this.factory = Preconditions.checkNotNull(factory, "Factory");
         this.objectAdapter = Preconditions.checkNotNull(objectAdapter, "ObjectAdapter");
         this.throwableAdapter = Preconditions.checkNotNull(throwableAdapter, "ThrowableAdapter");
@@ -88,11 +87,8 @@ final class MethodResponseEncoder extends OneToOneEncoder {
             final Fault fault = factory.createMethodResponseFault();
             response.setFault(fault);
             
-            final Fault.Value value = factory.createMethodResponseFaultValue();
+            final Fault.Value value = throwableAdapter.encode(throwable);
             fault.setValue(value);
-
-            final Struct struct = throwableAdapter.encode(throwable);
-            value.setStruct(struct);
             
             return response;
         } else {

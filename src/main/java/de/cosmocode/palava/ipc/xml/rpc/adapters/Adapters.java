@@ -26,7 +26,7 @@ import com.google.common.base.Preconditions;
  * @author Willi Schoenborn
  */
 public final class Adapters {
-
+    
     private Adapters() {
         
     }
@@ -41,7 +41,7 @@ public final class Adapters {
      * @return a function using the decode method of the given adapter
      * @throws NullPointerException if adapter is null
      */
-    public static <F, T> Function<F, T> asDecodeFunction(final Adapter<? super F, ? extends T> adapter) {
+    public static <F, T> Function<F, T> asDecoder(final Adapter<? super F, ? extends T> adapter) {
         Preconditions.checkNotNull(adapter, "Adapter");
         return new Function<F, T>() {
 
@@ -49,6 +49,11 @@ public final class Adapters {
             public T apply(F from) {
                 return adapter.decode(from);
             };
+            
+            @Override
+            public String toString() {
+                return String.format("Adapters.asDecoder(%s)", adapter);
+            }
             
         };
     }
@@ -63,7 +68,7 @@ public final class Adapters {
      * @return a function using the encode method of the given adapter
      * @throws NullPointerException if adapter is null
      */
-    public static <F, T> Function<T, F> asEncodeFunction(final Adapter<? extends F, ? super T> adapter) {
+    public static <F, T> Function<T, F> asEncoder(final Adapter<? extends F, ? super T> adapter) {
         Preconditions.checkNotNull(adapter, "Adapter");
         return new Function<T, F>() {
             
@@ -71,6 +76,79 @@ public final class Adapters {
             public F apply(T from) {
                 return adapter.encode(from);
             };
+            
+            @Override
+            public String toString() {
+                return String.format("Adapters.asEncoder(%s)", adapter);
+            }
+            
+        };
+    }
+    
+    /**
+     * Creates an inverse version of the specified {@link Adapter} which uses
+     * {@link Adapter#decode(Object)} when asked to encode and vice versa.
+     * 
+     * @since 1.0
+     * @param <F> target type
+     * @param <T> source type
+     * @param adapter the backing adapter
+     * @return an adapter which is a flipped version of the given one
+     * @throws NullPointerException if adapter is null
+     */
+    public static <F, T> Adapter<T, F> flip(final Adapter<F, T> adapter) {
+        Preconditions.checkNotNull(adapter, "Adapter");
+        return new Adapter<T, F>() {
+            
+            @Override
+            public F decode(T input) {
+                return adapter.encode(input);
+            };
+            
+            @Override
+            public T encode(F input) {
+                return adapter.decode(input);
+            };
+            
+            @Override
+            public String toString() {
+                return String.format("Adapters.flip(%s)", adapter);
+            }
+            
+        };
+    }
+    
+    /**
+     * Composes two {@link Adapter}s into one.
+     * 
+     * @since 1.0
+     * @param <F> source type
+     * @param <T> intermediate type
+     * @param <S> target type
+     * @param left left adapter
+     * @param right right adapter
+     * @return an adapter chaining left and right
+     * @throws NullPointerException if left or right is null
+     */
+    public static <F, T, S> Adapter<F, S> compose(final Adapter<F, T> left, final Adapter<T, S> right) {
+        Preconditions.checkNotNull(left, "Left");
+        Preconditions.checkNotNull(right, "Right");
+        return new Adapter<F, S>() {
+            
+            @Override
+            public S decode(F input) {
+                return right.decode(left.decode(input));
+            };
+
+            @Override
+            public F encode(S input) {
+                return left.encode(right.encode(input));
+            };
+
+            @Override
+            public String toString() {
+                return String.format("Adapters.compose(%s, %s)", left, right);
+            }
             
         };
     }

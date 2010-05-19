@@ -37,7 +37,6 @@ import de.cosmocode.palava.ipc.MapIpcArguments;
 import de.cosmocode.palava.ipc.xml.rpc.adapters.Adapter;
 import de.cosmocode.palava.ipc.xml.rpc.generated.MethodCall;
 import de.cosmocode.palava.ipc.xml.rpc.generated.Param;
-import de.cosmocode.palava.ipc.xml.rpc.generated.Struct;
 import de.cosmocode.palava.ipc.xml.rpc.generated.Value;
 import de.cosmocode.palava.ipc.xml.rpc.generated.MethodCall.Params;
 
@@ -53,11 +52,13 @@ final class MethodCallDecoder extends OneToOneDecoder {
 
     private static final Logger LOG = LoggerFactory.getLogger(MethodCallDecoder.class);
     
-    private final Adapter<Struct, Map<String, Object>> mapAdapter;
+    private final Adapter<Value, Map<String, Object>> mapAdapter;
     private final Adapter<Value, Object> objectAdapter;
     
     @Inject
-    public MethodCallDecoder(Adapter<Struct, Map<String, Object>> mapAdapter, Adapter<Value, Object> objectAdapter) {
+    public MethodCallDecoder(
+        Adapter<Value, Map<String, Object>> mapAdapter,
+        Adapter<Value, Object> objectAdapter) {
         this.mapAdapter = Preconditions.checkNotNull(mapAdapter, "MapAdapter");
         this.objectAdapter = Preconditions.checkNotNull(objectAdapter, "ObjectAdapter");
     }
@@ -77,11 +78,10 @@ final class MethodCallDecoder extends OneToOneDecoder {
             } else if (params.getParam().isEmpty()) {
                 LOG.trace("Empty params provided");
                 arguments = MapIpcArguments.empty();
-            } else if (params.getParam().size() == 1 && params.getParam().get(0).getValue() instanceof Struct) {
+            } else if (params.getParam().size() == 1 && params.getParam().get(0).getValue().getStruct() != null) {
                 LOG.trace("Treating single struct param as named params");
                 // single struct parameter will be treated as named parameters
-                final Struct struct = Struct.class.cast(params.getParam().get(0).getValue());
-                arguments = named(struct);
+                arguments = named(params.getParam().get(0).getValue());
             } else {
                 LOG.trace("Treating params as positional");
                 // positional parameters
@@ -94,8 +94,8 @@ final class MethodCallDecoder extends OneToOneDecoder {
         }
     }
 
-    private IpcArguments named(Struct struct) {
-        return new XmlRpcArguments(mapAdapter.decode(struct));
+    private IpcArguments named(Value value) {
+        return new XmlRpcArguments(mapAdapter.decode(value));
     }
     
     private IpcArguments positional(Params params) {

@@ -25,34 +25,34 @@ import de.cosmocode.palava.ipc.xml.rpc.generated.ObjectFactory;
 import de.cosmocode.palava.ipc.xml.rpc.generated.Value;
 
 /**
- * A {@link Value} to {@link Boolean} adapter.
+ * A {@link Value} to {@link String} adapter.
  *
  * @since 1.0
  * @author Willi Schoenborn
  */
-final class BooleanAdapter implements Adapter<Value, Boolean> {
+final class StringAdapter implements Adapter<Value, String> {
 
-    static final TypeLiteral<Adapter<Value, Boolean>> LITERAL =
-        new TypeLiteral<Adapter<Value, Boolean>>() { };
+    static final TypeLiteral<Adapter<Value, String>> LITERAL =
+        new TypeLiteral<Adapter<Value, String>>() { };
 
     private final ObjectFactory factory;
     
     @Inject
-    public BooleanAdapter(@XmlRpc ObjectFactory factory) {
+    public StringAdapter(@XmlRpc ObjectFactory factory) {
         this.factory = Preconditions.checkNotNull(factory, "Factory");
     }
 
     @Override
-    public Boolean decode(Value input) {
+    public String decode(Value input) {
         Preconditions.checkNotNull(input, "Input");
-        return input.isBoolean();
+        return input.getString();
     }
     
     @Override
-    public Value encode(Boolean input) {
+    public Value encode(String input) {
         Preconditions.checkNotNull(input, "Input");
         final Value value = factory.createValue();
-        value.setBoolean(input);
+        value.setString(input);
         return value;
     }
     

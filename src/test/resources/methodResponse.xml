@@ -23,11 +23,11 @@
       <struct>
         <member>
           <name>faultCode</name>
-          <value>0</value>
+          <value><i4>0</i4></value>
         </member>
         <member>
           <name>faultString</name>
-          <value>value</value>
+          <value><string>value</string></value>
         </member>
       </struct>
     </value>

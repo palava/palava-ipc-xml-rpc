@@ -20,17 +20,25 @@ import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
+import javax.xml.datatype.DatatypeConfigurationException;
+import javax.xml.datatype.DatatypeFactory;
 
 import org.jboss.netty.channel.ChannelPipeline;
 import org.jboss.netty.channel.ChannelPipelineFactory;
+import org.jboss.netty.channel.Channels;
+import org.jboss.netty.handler.codec.http.HttpChunkAggregator;
+import org.jboss.netty.handler.codec.http.HttpContentCompressor;
+import org.jboss.netty.handler.codec.http.HttpContentDecompressor;
+import org.jboss.netty.handler.codec.http.HttpRequestDecoder;
+import org.jboss.netty.handler.codec.http.HttpResponseEncoder;
 
 import com.google.inject.Binder;
 import com.google.inject.Module;
 import com.google.inject.Provider;
 import com.google.inject.Provides;
+import com.google.inject.Scopes;
 import com.google.inject.Singleton;
 
-import de.cosmocode.palava.ipc.xml.Xml;
 import de.cosmocode.palava.ipc.xml.rpc.adapters.AdapterModule;
 import de.cosmocode.palava.ipc.xml.rpc.generated.ObjectFactory;
 
@@ -44,6 +52,11 @@ public final class XmlRpcNettyModule implements Module {
 
     @Override
     public void configure(Binder binder) {
+        binder.bind(HttpRequestDecoder.class).in(Scopes.NO_SCOPE);
+        binder.bind(HttpContentCompressor.class).in(Scopes.NO_SCOPE);
+        binder.bind(HttpResponseEncoder.class).in(Singleton.class);
+        binder.bind(HttpContentDecoder.class).in(Singleton.class);
+        binder.bind(HttpContentEncoder.class).in(Singleton.class);
         binder.bind(JaxbDecoder.class).in(Singleton.class);
         binder.bind(JaxbEncoder.class).in(Singleton.class);
         binder.bind(MethodCallDecoder.class).in(Singleton.class);
@@ -53,6 +66,76 @@ public final class XmlRpcNettyModule implements Module {
         binder.bind(ObjectFactory.class).annotatedWith(XmlRpc.class).to(ObjectFactory.class).in(Singleton.class);
         
         binder.install(new AdapterModule());
+    }
+
+    /**
+     * Provides a stateful http chunk aggregator.
+     * 
+     * @since 1.0
+     * @return a new {@link HttpChunkAggregator}
+     */
+    @Provides
+    HttpChunkAggregator provideHttpChunkAggregator() {
+        return new HttpChunkAggregator(1048576);
+    }
+    
+    /**
+     * Provides a channel pipeline.
+     * 
+     * @since 1.0
+     * @param httpRequestDecoder the http request decoder
+     * @param chunkAggregator the http chunk aggregator
+     * @param httpResponseEncoder the http response encoder
+     * @param compressor the http compressor
+     * @param decompressor the http decompressor
+     * @param httpContentDecoder the http content decoder
+     * @param httpContentEncoder the http content encoder
+     * @param jaxbDecoder the xml-rpc decoder
+     * @param jaxbEncoder the xml-rpc encoder
+     * @param callDecoder the call decoder
+     * @param responseEncoder the response encoder
+     * @param handler the xml-rpc handler
+     * @return a new {@link ChannelPipeline}
+     */
+    @Provides
+    ChannelPipeline provideChannelPipeline(
+        HttpRequestDecoder httpRequestDecoder, HttpChunkAggregator chunkAggregator,
+        HttpResponseEncoder httpResponseEncoder, 
+        HttpContentCompressor compressor, HttpContentDecompressor decompressor,
+        HttpContentDecoder httpContentDecoder, HttpContentEncoder httpContentEncoder,
+        JaxbDecoder jaxbDecoder, JaxbEncoder jaxbEncoder,
+        MethodCallDecoder callDecoder,
+        MethodResponseEncoder responseEncoder,
+        XmlRpcHandler handler) {
+        return Channels.pipeline(
+            httpRequestDecoder, chunkAggregator,
+            httpResponseEncoder, 
+            compressor, decompressor,
+            httpContentDecoder, httpContentEncoder,
+            jaxbDecoder, jaxbEncoder,
+            callDecoder, responseEncoder,
+            handler
+        );
+    }
+    
+    /**
+     * Provides a channel pipeline factory.
+     * 
+     * @since 1.0
+     * @param provider the backing provider
+     * @return a new {@link ChannelPipelineFactory}
+     */
+    @Provides
+    @Singleton
+    ChannelPipelineFactory provideChannelPipelineFactory(final Provider<ChannelPipeline> provider) {
+        return new ChannelPipelineFactory() {
+            
+            @Override
+            public ChannelPipeline getPipeline() throws Exception {
+                return provider.get();
+            }
+            
+        };
     }
     
     /**
@@ -78,7 +161,6 @@ public final class XmlRpcNettyModule implements Module {
      * @throws JAXBException if creation failed
      */
     @Provides
-    @Singleton
     @XmlRpc
     Marshaller provideMarshaller(@XmlRpc JAXBContext context) throws JAXBException {
         return context.createMarshaller();
@@ -93,56 +175,23 @@ public final class XmlRpcNettyModule implements Module {
      * @throws JAXBException if creation failed
      */
     @Provides
-    @Singleton
     @XmlRpc
     Unmarshaller provideUnmarshaller(@XmlRpc JAXBContext context) throws JAXBException {
         return context.createUnmarshaller();
     }
     
     /**
-     * Provides a channel pipeline.
+     * Provides a {@link DatatypeFactory}.
      * 
      * @since 1.0
-     * @param pipeline the backing xml pipeline
-     * @param jaxbDecoder the xml-rpc decoder
-     * @param jaxbEncoder the xml-rpc encoder
-     * @param callDecoder the call decoder
-     * @param responseEncoder the response encoder
-     * @param handler the xml-rpc handler
-     * @return a new {@link ChannelPipeline}
-     */
-    @Provides
-    ChannelPipeline provideChannelPipeline(@Xml ChannelPipeline pipeline, 
-        JaxbDecoder jaxbDecoder, JaxbEncoder jaxbEncoder,
-        MethodCallDecoder callDecoder,
-        MethodResponseEncoder responseEncoder,
-        XmlRpcHandler handler) {
-        pipeline.addLast("jaxb-decoder", jaxbDecoder);
-        pipeline.addLast("jaxb-encoder", jaxbEncoder);
-        pipeline.addLast("call-decoder", callDecoder);
-        pipeline.addLast("response-encoder", responseEncoder);
-        pipeline.addLast("rpc-handler", handler);
-        return pipeline;
-    }
-    
-    /**
-     * Provides a channel pipeline factory.
-     * 
-     * @since 1.0
-     * @param provider the backing provider
-     * @return a new {@link ChannelPipelineFactory}
+     * @return a new {@link DatatypeFactory}
+     * @throws DatatypeConfigurationException if creation failed
      */
     @Provides
     @Singleton
-    ChannelPipelineFactory provideChannelPipelineFactory(final Provider<ChannelPipeline> provider) {
-        return new ChannelPipelineFactory() {
-            
-            @Override
-            public ChannelPipeline getPipeline() throws Exception {
-                return provider.get();
-            }
-            
-        };
+    @XmlRpc
+    DatatypeFactory provideDatatypeFactory() throws DatatypeConfigurationException {
+        return DatatypeFactory.newInstance();
     }
     
 }

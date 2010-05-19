@@ -16,7 +16,12 @@
 
 package de.cosmocode.palava.ipc.xml.rpc.adapters;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+
 import com.google.common.base.Preconditions;
+import com.google.common.io.ByteStreams;
 import com.google.inject.Inject;
 import com.google.inject.TypeLiteral;
 
@@ -25,35 +30,43 @@ import de.cosmocode.palava.ipc.xml.rpc.generated.ObjectFactory;
 import de.cosmocode.palava.ipc.xml.rpc.generated.Value;
 
 /**
- * A {@link Value} to {@link Boolean} adapter.
+ * An {@link Value} to {@link InputStream} adapter.
  *
  * @since 1.0
  * @author Willi Schoenborn
  */
-final class BooleanAdapter implements Adapter<Value, Boolean> {
+final class InputStreamAdapter implements Adapter<Value, InputStream> {
 
-    static final TypeLiteral<Adapter<Value, Boolean>> LITERAL =
-        new TypeLiteral<Adapter<Value, Boolean>>() { };
+    static final TypeLiteral<Adapter<Value, InputStream>> LITERAL =
+        new TypeLiteral<Adapter<Value, InputStream>>() { };
 
     private final ObjectFactory factory;
     
     @Inject
-    public BooleanAdapter(@XmlRpc ObjectFactory factory) {
+    public InputStreamAdapter(@XmlRpc ObjectFactory factory) {
         this.factory = Preconditions.checkNotNull(factory, "Factory");
     }
-
+    
     @Override
-    public Boolean decode(Value input) {
+    public InputStream decode(Value input) {
         Preconditions.checkNotNull(input, "Input");
-        return input.isBoolean();
+        return new ByteArrayInputStream(input.getBase64());
     }
     
     @Override
-    public Value encode(Boolean input) {
+    public Value encode(InputStream input) {
         Preconditions.checkNotNull(input, "Input");
         final Value value = factory.createValue();
-        value.setBoolean(input);
+        final byte[] bytes;
+        
+        try {
+            bytes = ByteStreams.toByteArray(input);
+        } catch (IOException e) {
+            throw new IllegalArgumentException(e);
+        }
+        
+        value.setBase64(bytes);
         return value;
     }
-    
+
 }
