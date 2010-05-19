@@ -34,7 +34,7 @@ final class ValueObjectAdapter implements Adapter<Value, Object> {
         new TypeLiteral<Adapter<Value, Object>>() { };
 
     private final ImmutableMap<Class<? extends Value>, Adapter<? super Value, ? extends Object>> decoders;
-    private final ImmutableMap<Class<?>, Adapter<? extends Value, ? super Object>> encoders;
+    private final ImmutableMap<Class<? extends Object>, Adapter<? extends Value, ? super Object>> encoders;
         
     // TODO depend on all adapters
     public ValueObjectAdapter() {

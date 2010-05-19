@@ -29,10 +29,13 @@ public final class AdapterModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        bind(ValueObjectAdapter.LITERAL).to(ValueObjectAdapter.class).in(Singleton.class);
+        bind(BooleanAdapter.LITERAL).to(BooleanAdapter.class).in(Singleton.class);
+        bind(I4IntegerAdapter.LITERAL).to(I4IntegerAdapter.class).in(Singleton.class);
+        bind(IntIntegerAdapter.LITERAL).to(IntIntegerAdapter.class).in(Singleton.class);
         bind(MemberEntryAdapter.LITERAL).to(MemberEntryAdapter.class).in(Singleton.class);
         bind(StructMapAdapter.LITERAL).to(StructMapAdapter.class).in(Singleton.class);
         bind(StructThrowableAdapter.LITERAL).to(StructThrowableAdapter.class).in(Singleton.class);
+        bind(ValueObjectAdapter.LITERAL).to(ValueObjectAdapter.class).in(Singleton.class);
     }
     
 }
