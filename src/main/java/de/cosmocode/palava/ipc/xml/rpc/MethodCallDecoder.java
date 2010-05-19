@@ -16,16 +16,30 @@
 
 package de.cosmocode.palava.ipc.xml.rpc;
 
+import java.util.AbstractList;
+import java.util.List;
+import java.util.Map;
+
+import javax.annotation.concurrent.ThreadSafe;
+
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelHandlerContext;
+import org.jboss.netty.channel.ChannelHandler.Sharable;
 import org.jboss.netty.handler.codec.oneone.OneToOneDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Preconditions;
+import com.google.inject.Inject;
+
 import de.cosmocode.palava.ipc.IpcArguments;
 import de.cosmocode.palava.ipc.MapIpcArguments;
+import de.cosmocode.palava.ipc.xml.rpc.adapters.Adapter;
 import de.cosmocode.palava.ipc.xml.rpc.generated.MethodCall;
+import de.cosmocode.palava.ipc.xml.rpc.generated.Param;
 import de.cosmocode.palava.ipc.xml.rpc.generated.Struct;
+import de.cosmocode.palava.ipc.xml.rpc.generated.Value;
+import de.cosmocode.palava.ipc.xml.rpc.generated.MethodCall.Params;
 
 /**
  * A decoder which decodes {@link MethodCall}s into {@link XmlRpcCall}s.
@@ -33,9 +47,20 @@ import de.cosmocode.palava.ipc.xml.rpc.generated.Struct;
  * @since 1.0
  * @author Willi Schoenborn
  */
+@Sharable
+@ThreadSafe
 final class MethodCallDecoder extends OneToOneDecoder {
 
     private static final Logger LOG = LoggerFactory.getLogger(MethodCallDecoder.class);
+    
+    private final Adapter<Struct, Map<String, Object>> mapAdapter;
+    private final Adapter<Value, Object> objectAdapter;
+    
+    @Inject
+    public MethodCallDecoder(Adapter<Struct, Map<String, Object>> mapAdapter, Adapter<Value, Object> objectAdapter) {
+        this.mapAdapter = Preconditions.checkNotNull(mapAdapter, "MapAdapter");
+        this.objectAdapter = Preconditions.checkNotNull(objectAdapter, "ObjectAdapter");
+    }
 
     @Override
     protected Object decode(ChannelHandlerContext context, Channel channel, Object message) throws Exception {
@@ -43,7 +68,7 @@ final class MethodCallDecoder extends OneToOneDecoder {
             final MethodCall methodCall = MethodCall.class.cast(message);
             final String methodName = methodCall.getMethodName();
             
-            final MethodCall.Params params = methodCall.getParams();
+            final Params params = methodCall.getParams();
             final IpcArguments arguments;
 
             if (params == null) {
@@ -70,11 +95,39 @@ final class MethodCallDecoder extends OneToOneDecoder {
     }
 
     private IpcArguments named(Struct struct) {
-        return null;
+        return new XmlRpcArguments(mapAdapter.decode(struct));
     }
     
-    private IpcArguments positional(MethodCall.Params params) {
-        return null;
+    private IpcArguments positional(Params params) {
+        return new XmlRpcArguments(new ParamsList(params.getParam(), objectAdapter));
+    }
+    
+    /**
+     * {@link List} of {@link Param} backed {@link List} implementation.
+     *
+     * @since 1.0
+     * @author Willi Schoenborn
+     */
+    private static final class ParamsList extends AbstractList<Object> {
+        
+        private final List<Param> params;
+        private final Adapter<Value, Object> objectAdapter;
+        
+        public ParamsList(List<Param> params, Adapter<Value, Object> objectAdapter) {
+            this.params = params;
+            this.objectAdapter = objectAdapter;
+        }
+
+        @Override
+        public Object get(int index) {
+            return objectAdapter.decode(params.get(index).getValue());
+        }
+
+        @Override
+        public int size() {
+            return params.size();
+        }
+        
     }
     
 }

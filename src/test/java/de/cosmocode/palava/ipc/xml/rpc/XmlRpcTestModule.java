@@ -16,17 +16,8 @@
 
 package de.cosmocode.palava.ipc.xml.rpc;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerConfigurationException;
-import javax.xml.transform.TransformerFactory;
-
 import com.google.inject.Binder;
 import com.google.inject.Module;
-import com.google.inject.Provides;
-import com.google.inject.Singleton;
 
 import de.cosmocode.palava.concurrent.DefaultThreadProviderModule;
 import de.cosmocode.palava.concurrent.ExecutorModule;
@@ -34,6 +25,8 @@ import de.cosmocode.palava.core.DefaultRegistryModule;
 import de.cosmocode.palava.core.inject.TypeConverterModule;
 import de.cosmocode.palava.core.lifecycle.LifecycleModule;
 import de.cosmocode.palava.ipc.DefaultIpcCallFilterChainFactoryModule;
+import de.cosmocode.palava.ipc.IpcEventModule;
+import de.cosmocode.palava.ipc.IpcModule;
 import de.cosmocode.palava.ipc.command.localvm.LocalIpcCommandExecutorModule;
 import de.cosmocode.palava.ipc.netty.Boss;
 import de.cosmocode.palava.ipc.netty.NettyServiceModule;
@@ -60,49 +53,11 @@ public final class XmlRpcTestModule implements Module {
         binder.install(new DefaultThreadProviderModule());
         binder.install(new LocalIpcCommandExecutorModule());
         binder.install(new DefaultIpcCallFilterChainFactoryModule());
+        binder.install(new IpcModule());
+        binder.install(new IpcEventModule());
         binder.install(new NettyServiceModule());
         binder.install(new XmlNettyModule());
         binder.install(new XmlRpcNettyModule());
-        binder.install(new XmlRpcModule());
-    }
-
-    /**
-     * Provides a document builder.
-     * 
-     * @since 1.0
-     * @return a new {@link DocumentBuilder}
-     * @throws ParserConfigurationException if a DocumentBuilder cannot be created which 
-     *         satisfies the configuration requested.
-     */
-    @Provides
-    @Singleton
-    DocumentBuilder provideDocumentBuilder() throws ParserConfigurationException {
-        return DocumentBuilderFactory.newInstance().newDocumentBuilder();
-    }
-    
-    /**
-     * Provides a transformer factory.
-     * 
-     * @since 1.0
-     * @return a new {@link TransformerFactory}
-     */
-    @Provides
-    @Singleton
-    TransformerFactory provideTransformerFactory() {
-        return TransformerFactory.newInstance();
-    }
-    
-    /**
-     * Provides a transformer.
-     * 
-     * @since 1.0
-     * @param factory the factory used to create the instance
-     * @return a new {@link Transformer}
-     * @throws TransformerConfigurationException When it is not possible to create a Transformer instance.
-     */
-    @Provides
-    Transformer provideTransformer(TransformerFactory factory) throws TransformerConfigurationException {
-        return factory.newTransformer();
     }
 
 }

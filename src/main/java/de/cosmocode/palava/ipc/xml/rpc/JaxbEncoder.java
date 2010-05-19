@@ -19,7 +19,6 @@ package de.cosmocode.palava.ipc.xml.rpc;
 import java.io.OutputStream;
 
 import javax.annotation.concurrent.ThreadSafe;
-import javax.xml.bind.JAXBElement;
 import javax.xml.bind.Marshaller;
 
 import org.jboss.netty.buffer.ChannelBuffer;
@@ -33,9 +32,10 @@ import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 
 import de.cosmocode.palava.ipc.netty.ChannelBuffering;
+import de.cosmocode.palava.ipc.xml.rpc.generated.MethodResponse;
 
 /**
- * Encoder which encodes {@link JAXBElement}s into {@link ChannelBuffer}s.
+ * Encoder which encodes {@link MethodResponse}s into {@link ChannelBuffer}s.
  *
  * @since 1.0
  * @author Willi Schoenborn
@@ -53,10 +53,14 @@ final class JaxbEncoder extends OneToOneEncoder {
     
     @Override
     protected Object encode(ChannelHandlerContext context, Channel channel, Object message) throws Exception {
-        final ChannelBuffer buffer = ChannelBuffers.dynamicBuffer();
-        final OutputStream stream = ChannelBuffering.asOutputStream(buffer);
-        marshaller.marshal(message, stream);
-        return buffer;
+        if (message instanceof MethodResponse) {
+            final ChannelBuffer buffer = ChannelBuffers.dynamicBuffer();
+            final OutputStream stream = ChannelBuffering.asOutputStream(buffer);
+            marshaller.marshal(message, stream);
+            return buffer;
+        } else {
+            return message;
+        }
     }
 
 }

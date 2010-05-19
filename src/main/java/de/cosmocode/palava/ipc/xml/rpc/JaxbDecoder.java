@@ -19,7 +19,6 @@ package de.cosmocode.palava.ipc.xml.rpc;
 import java.io.InputStream;
 
 import javax.annotation.concurrent.ThreadSafe;
-import javax.xml.bind.JAXBElement;
 import javax.xml.bind.Unmarshaller;
 
 import org.jboss.netty.buffer.ChannelBuffer;
@@ -29,11 +28,13 @@ import org.jboss.netty.channel.ChannelHandler.Sharable;
 import org.jboss.netty.handler.codec.oneone.OneToOneDecoder;
 
 import com.google.common.base.Preconditions;
+import com.google.inject.Inject;
 
 import de.cosmocode.palava.ipc.netty.ChannelBuffering;
+import de.cosmocode.palava.ipc.xml.rpc.generated.MethodCall;
 
 /**
- * Decoder which decodes {@link ChannelBuffer}s into {@link JAXBElement}s.
+ * Decoder which decodes {@link ChannelBuffer}s into {@link MethodCall}s.
  *
  * @since 1.0
  * @author Willi Schoenborn
@@ -44,6 +45,7 @@ final class JaxbDecoder extends OneToOneDecoder {
 
     private final Unmarshaller unmarshaller;
     
+    @Inject
     public JaxbDecoder(@XmlRpc Unmarshaller unmarshaller) {
         this.unmarshaller = Preconditions.checkNotNull(unmarshaller, "Unmarshaller");
     }

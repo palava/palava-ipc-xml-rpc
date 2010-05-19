@@ -14,22 +14,25 @@
  * limitations under the License.
  */
 
-package de.cosmocode.palava.ipc.xml.rpc;
+package de.cosmocode.palava.ipc.xml.rpc.adapters;
 
-import com.google.inject.Binder;
-import com.google.inject.Module;
+import com.google.inject.AbstractModule;
+import com.google.inject.Singleton;
 
 /**
- * Binds xml-rpc protocols/converters.
+ * Binds all {@link Adapter} implementations.
  *
  * @since 1.0
  * @author Willi Schoenborn
  */
-public final class XmlRpcModule implements Module {
+public final class AdapterModule extends AbstractModule {
 
     @Override
-    public void configure(Binder binder) {
-        
+    protected void configure() {
+        bind(ValueObjectAdapter.LITERAL).to(ValueObjectAdapter.class).in(Singleton.class);
+        bind(MemberEntryAdapter.LITERAL).to(MemberEntryAdapter.class).in(Singleton.class);
+        bind(StructMapAdapter.LITERAL).to(StructMapAdapter.class).in(Singleton.class);
+        bind(StructThrowableAdapter.LITERAL).to(StructThrowableAdapter.class).in(Singleton.class);
     }
     
 }
