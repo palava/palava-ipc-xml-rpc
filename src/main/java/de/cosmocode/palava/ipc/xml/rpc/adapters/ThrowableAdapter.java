@@ -25,10 +25,9 @@ import de.cosmocode.palava.ipc.xml.rpc.generated.Member;
 import de.cosmocode.palava.ipc.xml.rpc.generated.ObjectFactory;
 import de.cosmocode.palava.ipc.xml.rpc.generated.Value;
 import de.cosmocode.palava.ipc.xml.rpc.generated.MethodResponse.Fault;
-import de.cosmocode.palava.ipc.xml.rpc.generated.MethodResponse.Fault.Value.Struct;
 
 /**
- * A {@link Struct} to {@link Throwable} adapter.
+ * A {@link Fault.Value.Struct} to {@link Throwable} adapter.
  *
  * @since 1.0
  * @author Willi Schoenborn
@@ -52,8 +51,9 @@ final class ThrowableAdapter implements Adapter<Fault.Value, Throwable> {
     
     @Override
     public Fault.Value encode(Throwable throwable) {
+        Preconditions.checkNotNull(throwable, "Throwable");
         final Fault.Value value = factory.createMethodResponseFaultValue();
-        final Struct struct = factory.createMethodResponseFaultValueStruct();
+        final Fault.Value.Struct struct = factory.createMethodResponseFaultValueStruct();
         value.setStruct(struct);
         
         final Member faultCode = factory.createMember();
