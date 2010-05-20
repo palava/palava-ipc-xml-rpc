@@ -16,23 +16,23 @@
 
 package de.cosmocode.palava.ipc.xml.rpc;
 
+import javax.xml.XMLConstants;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
-import javax.xml.datatype.DatatypeConfigurationException;
-import javax.xml.datatype.DatatypeFactory;
+import javax.xml.validation.Schema;
+import javax.xml.validation.SchemaFactory;
 
 import org.jboss.netty.channel.ChannelPipeline;
 import org.jboss.netty.channel.ChannelPipelineFactory;
 import org.jboss.netty.channel.Channels;
 import org.jboss.netty.handler.codec.http.HttpChunkAggregator;
-import org.jboss.netty.handler.codec.http.HttpContentCompressor;
-import org.jboss.netty.handler.codec.http.HttpContentDecompressor;
 import org.jboss.netty.handler.codec.http.HttpRequestDecoder;
 import org.jboss.netty.handler.codec.http.HttpResponseEncoder;
 
 import com.google.inject.Binder;
+import com.google.inject.Key;
 import com.google.inject.Module;
 import com.google.inject.Provider;
 import com.google.inject.Provides;
@@ -53,7 +53,6 @@ public final class XmlRpcNettyModule implements Module {
     @Override
     public void configure(Binder binder) {
         binder.bind(HttpRequestDecoder.class).in(Scopes.NO_SCOPE);
-        binder.bind(HttpContentCompressor.class).in(Scopes.NO_SCOPE);
         binder.bind(HttpResponseEncoder.class).in(Singleton.class);
         binder.bind(HttpContentDecoder.class).in(Singleton.class);
         binder.bind(HttpContentEncoder.class).in(Singleton.class);
@@ -63,7 +62,9 @@ public final class XmlRpcNettyModule implements Module {
         binder.bind(MethodResponseEncoder.class).in(Singleton.class);
         binder.bind(XmlRpcHandler.class).in(Singleton.class);
         
-        binder.bind(ObjectFactory.class).annotatedWith(XmlRpc.class).to(ObjectFactory.class).in(Singleton.class);
+        binder.bind(Key.get(Schema.class, XmlRpc.class)).toProvider(XmlRpcSchemaProvider.class).in(Singleton.class);
+        binder.bind(Marshaller.class).annotatedWith(XmlRpc.class).toProvider(XmlRpcMarshallerProvider.class);
+        binder.bind(Unmarshaller.class).annotatedWith(XmlRpc.class).toProvider(XmlRpcUnmarshallerProvider.class);
         
         binder.install(new AdapterModule());
     }
@@ -86,8 +87,6 @@ public final class XmlRpcNettyModule implements Module {
      * @param httpRequestDecoder the http request decoder
      * @param chunkAggregator the http chunk aggregator
      * @param httpResponseEncoder the http response encoder
-     * @param compressor the http compressor
-     * @param decompressor the http decompressor
      * @param httpContentDecoder the http content decoder
      * @param httpContentEncoder the http content encoder
      * @param jaxbDecoder the xml-rpc decoder
@@ -101,7 +100,6 @@ public final class XmlRpcNettyModule implements Module {
     ChannelPipeline provideChannelPipeline(
         HttpRequestDecoder httpRequestDecoder, HttpChunkAggregator chunkAggregator,
         HttpResponseEncoder httpResponseEncoder, 
-        HttpContentCompressor compressor, HttpContentDecompressor decompressor,
         HttpContentDecoder httpContentDecoder, HttpContentEncoder httpContentEncoder,
         JaxbDecoder jaxbDecoder, JaxbEncoder jaxbEncoder,
         MethodCallDecoder callDecoder,
@@ -110,7 +108,6 @@ public final class XmlRpcNettyModule implements Module {
         return Channels.pipeline(
             httpRequestDecoder, chunkAggregator,
             httpResponseEncoder, 
-            compressor, decompressor,
             httpContentDecoder, httpContentEncoder,
             jaxbDecoder, jaxbEncoder,
             callDecoder, responseEncoder,
@@ -139,6 +136,19 @@ public final class XmlRpcNettyModule implements Module {
     }
     
     /**
+     * Provides an object factory.
+     * 
+     * @since 1.0
+     * @return a new {@link ObjectFactory}
+     */
+    @Provides
+    @Singleton
+    @XmlRpc
+    ObjectFactory provideObjectFactory() {
+        return new ObjectFactory();
+    }
+    
+    /**
      * Provides an {@link JAXBContext} for this package.
      * 
      * @since 1.0
@@ -151,47 +161,18 @@ public final class XmlRpcNettyModule implements Module {
     JAXBContext provideJaxbContext() throws JAXBException {
         return JAXBContext.newInstance(ObjectFactory.class.getPackage().getName());
     }
-
-    /**
-     * Provides a {@link Marshaller} of the given context.
-     * 
-     * @since 1.0
-     * @param context the underlying context
-     * @return a new marshaller
-     * @throws JAXBException if creation failed
-     */
-    @Provides
-    @XmlRpc
-    Marshaller provideMarshaller(@XmlRpc JAXBContext context) throws JAXBException {
-        return context.createMarshaller();
-    }
-
-    /**
-     * Provides an {@link Unmarshaller} of the given context.
-     * 
-     * @since 1.0
-     * @param context the underlying context
-     * @return a new unmarshaller
-     * @throws JAXBException if creation failed
-     */
-    @Provides
-    @XmlRpc
-    Unmarshaller provideUnmarshaller(@XmlRpc JAXBContext context) throws JAXBException {
-        return context.createUnmarshaller();
-    }
     
     /**
-     * Provides a {@link DatatypeFactory}.
+     * Provides a {@link SchemaFactory}.
      * 
      * @since 1.0
-     * @return a new {@link DatatypeFactory}
-     * @throws DatatypeConfigurationException if creation failed
+     * @return a new schema factory
      */
     @Provides
     @Singleton
     @XmlRpc
-    DatatypeFactory provideDatatypeFactory() throws DatatypeConfigurationException {
-        return DatatypeFactory.newInstance();
+    SchemaFactory provideSchemaFactory() {
+        return SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
     }
     
 }

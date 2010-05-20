@@ -16,17 +16,16 @@
 
 package de.cosmocode.palava.ipc.xml.rpc.adapters;
 
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.GregorianCalendar;
-
-import javax.xml.datatype.DatatypeFactory;
-import javax.xml.datatype.XMLGregorianCalendar;
 
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import com.google.inject.TypeLiteral;
 
-import de.cosmocode.commons.Calendars;
+import de.cosmocode.commons.DateFormats;
 import de.cosmocode.palava.ipc.xml.rpc.XmlRpc;
 import de.cosmocode.palava.ipc.xml.rpc.generated.ObjectFactory;
 import de.cosmocode.palava.ipc.xml.rpc.generated.Value;
@@ -38,32 +37,36 @@ import de.cosmocode.palava.ipc.xml.rpc.generated.Value;
  * @author Willi Schoenborn
  */
 final class DateAdapter implements Adapter<Value, Date> {
+    
+    public static final DateFormat PSEUDO_ISO_8061 = DateFormats.concurrent(
+        new SimpleDateFormat("yyyyMMdd'T'HH:mm:ss")
+    );
 
     static final TypeLiteral<Adapter<Value, Date>> LITERAL =
         new TypeLiteral<Adapter<Value, Date>>() { };
 
     private final ObjectFactory factory;
-    private final DatatypeFactory datatypeFactory;
     
     @Inject
-    public DateAdapter(@XmlRpc ObjectFactory factory, @XmlRpc DatatypeFactory datatypeFactory) {
+    public DateAdapter(@XmlRpc ObjectFactory factory) {
         this.factory = Preconditions.checkNotNull(factory, "Factory");
-        this.datatypeFactory = Preconditions.checkNotNull(datatypeFactory, "DatatypeFactory");
     }
 
     @Override
     public Date decode(Value input) {
         Preconditions.checkNotNull(input, "Input");
-        return input.getDateTimeIso8601().toGregorianCalendar().getTime();
+        try {
+            return PSEUDO_ISO_8061.parse(input.getDateTimeIso8601());
+        } catch (ParseException e) {
+            throw new IllegalArgumentException(e);
+        }
     }
     
     @Override
     public Value encode(Date input) {
         Preconditions.checkNotNull(input, "Input");
         final Value value = factory.createValue();
-        final GregorianCalendar calendar = Calendars.of(input);
-        final XMLGregorianCalendar xmlCalendar = datatypeFactory.newXMLGregorianCalendar(calendar);
-        value.setDateTimeIso8601(xmlCalendar);
+        value.setDateTimeIso8601(PSEUDO_ISO_8061.format(input));
         return value;
     }
     

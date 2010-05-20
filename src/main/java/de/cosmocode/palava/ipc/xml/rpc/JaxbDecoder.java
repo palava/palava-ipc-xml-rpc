@@ -50,13 +50,13 @@ final class JaxbDecoder extends OneToOneDecoder {
 
     private static final Logger LOG = LoggerFactory.getLogger(JaxbDecoder.class);
     
-    private final Provider<Unmarshaller> unmarshaller;
-    private final Provider<Marshaller> marshaller;
+    private final Provider<Unmarshaller> unmarshallerProvider;
+    private final Provider<Marshaller> marshallerProvider;
     
     @Inject
     public JaxbDecoder(@XmlRpc Provider<Unmarshaller> unmarshaller, @XmlRpc Provider<Marshaller> marshaller) {
-        this.unmarshaller = Preconditions.checkNotNull(unmarshaller, "Unmarshaller");
-        this.marshaller = Preconditions.checkNotNull(marshaller, "Marshaller");
+        this.unmarshallerProvider = Preconditions.checkNotNull(unmarshaller, "UnmarshallerProvider");
+        this.marshallerProvider = Preconditions.checkNotNull(marshaller, "MarshallerProvider");
     }
 
     @Override
@@ -64,17 +64,17 @@ final class JaxbDecoder extends OneToOneDecoder {
         if (message instanceof ChannelBuffer) {
             final ChannelBuffer buffer = ChannelBuffer.class.cast(message);
             final InputStream stream = ChannelBuffering.asInputStream(buffer);
-            final Object unmarshalled = unmarshaller.get().unmarshal(stream);
+            final Unmarshaller unmarshaller = unmarshallerProvider.get();
+            final Object unmarshalled = unmarshaller.unmarshal(stream);
             
             if (LOG.isTraceEnabled()) {
                 final StringWriter writer = new StringWriter();
-                final Marshaller m = marshaller.get();
-                m.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
-                m.marshal(unmarshalled, writer);
-                LOG.trace("Incoming xml: {}", writer);
+                final Marshaller marshaller = marshallerProvider.get();
+                marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
+                marshaller.marshal(unmarshalled, writer);
+                LOG.trace("Xml-Rpc call:\n{}", writer);
             }
             
-            LOG.trace("Unmarshalled {}", unmarshalled);
             return unmarshalled;
         } else {
             return message;

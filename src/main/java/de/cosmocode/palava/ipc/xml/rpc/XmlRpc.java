@@ -23,6 +23,8 @@ import java.lang.annotation.Target;
 
 import com.google.inject.BindingAnnotation;
 
+import de.cosmocode.palava.ipc.Ipc;
+
 /**
  * Binding annotation and utility class for xml rpc communication.
  *
@@ -40,5 +42,11 @@ public @interface XmlRpc {
     String FAULT_CODE = "faultCode";
     
     String FAULT_STRING = "faultString";
+    
+    String PREFIX = Ipc.PREFIX + "xmlrpc.";
+    
+    String SCHEMA = PREFIX + "schema";
+    
+    String VALIDATE = PREFIX + "validate";
     
 }

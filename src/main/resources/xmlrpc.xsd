@@ -79,7 +79,7 @@
       <xsd:element name="array" type="array" minOccurs="1" maxOccurs="1"/>
       <xsd:element name="base64" type="xsd:base64Binary" minOccurs="1" maxOccurs="1"/>
       <xsd:element name="boolean" type="boolean" minOccurs="1" maxOccurs="1"/>
-      <xsd:element name="dateTime.iso8601" type="xsd:dateTime" minOccurs="1" maxOccurs="1"/>
+      <xsd:element name="dateTime.iso8601" type="dateTime.iso8601" minOccurs="1" maxOccurs="1"/>
       <xsd:element name="double" type="xsd:double" minOccurs="1" maxOccurs="1"/>
       <xsd:element name="i4" type="xsd:int" minOccurs="1" maxOccurs="1"/>
       <xsd:element name="int" type="xsd:int" minOccurs="1" maxOccurs="1"/>
@@ -90,6 +90,11 @@
   <xsd:simpleType name="boolean">
     <xsd:restriction base="xsd:boolean">
       <xsd:pattern value="0|1"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+  <xsd:simpleType name="dateTime.iso8601">
+    <xsd:restriction base="xsd:string">
+      <xsd:pattern value="[\d]{4}((0[1-9])|(1[0-2]))((0[1-9])|([1-2][0-9])|(3[0-1]))T(([0-1][0-9])|(2[0-3])):([0-5][0-9]):([0-5][0-9])"/>
     </xsd:restriction>
   </xsd:simpleType>
   <xsd:simpleType name="string">

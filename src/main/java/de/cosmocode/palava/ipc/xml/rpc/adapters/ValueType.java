@@ -74,23 +74,24 @@ enum ValueType {
         // ordering from the most used to the least
         if (value.getString() != null) {
             return STRING;
-        } else if (value.getArray() != null) {
+        } else if (value.isBoolean() != null) {
+            return BOOLEAN;
+        } else if (value.getStruct() != null) {
             return STRUCT;
         } else if (value.getI4() != null) {
             return I4;
         } else if (value.getInt() != null) {
             return INT;
-        } else if (value.getDouble() != null) {
-            return BOOLEAN;
-        } else if (value.getDateTimeIso8601() != null) {
+        } else if (value.getArray() != null) {
             return ARRAY;
-        } else if (value.getStruct() != null) {
+        } else if (value.getDouble() != null) {
             return DOUBLE;
-        } else if (value.isBoolean() != null) {
+        } else if (value.getDateTimeIso8601() != null) {
             return DATETIME_ISO801;
         } else if (value.getBase64() != null) {
             return BASE64;
         } else {
+            // FIXME this should be considered a string
             throw new IllegalArgumentException(String.format("%s is of unknown type", value));
         }
     }

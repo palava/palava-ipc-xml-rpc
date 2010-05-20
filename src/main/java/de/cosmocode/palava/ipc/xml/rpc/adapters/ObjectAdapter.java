@@ -31,6 +31,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.collect.Ordering;
 import com.google.common.collect.ImmutableSortedMap.Builder;
+import com.google.common.primitives.Ints;
 import com.google.inject.Inject;
 import com.google.inject.TypeLiteral;
 
@@ -52,12 +53,22 @@ final class ObjectAdapter implements Adapter<Value, Object> {
         
     private static final Logger LOG = LoggerFactory.getLogger(ObjectAdapter.class);
     
-    private static final Ordering<Class<?>> ORDERING = new Ordering<Class<?>>() {
+    /**
+     * Orders classes by hierarchy, sub classes are considered less than super classes.
+     */
+    private static final Ordering<Class<?>> ORDER_BY_HIERARCHY = new Ordering<Class<?>>() {
         
         @Override
         public int compare(Class<?> left, Class<?> right) {
-            if (right == left) return 0;
-            return left.isAssignableFrom(right) ? 1 : -1;
+            if (left == right) {
+                return 0;
+            } else if (left.isAssignableFrom(right)) {
+                return 1;
+            } else if (right.isAssignableFrom(left)) {
+                return -1;
+            } else {
+                return Ints.compare(left.hashCode(), right.hashCode());
+            }
         }
         
     };
@@ -83,8 +94,9 @@ final class ObjectAdapter implements Adapter<Value, Object> {
         this.nullValue = factory.createValue();
         this.nullValue.setString("null");
         
-        final Builder<Class<?>, Adapter<Value, ?>> builder = ImmutableSortedMap.orderedBy(ORDERING);
+        final Builder<Class<?>, Adapter<Value, ?>> builder = ImmutableSortedMap.orderedBy(ORDER_BY_HIERARCHY);
         
+        builder.put(Number.class, numberAdapter);
         builder.put(Boolean.class, booleanAdapter);
         builder.put(Calendar.class, Adapters.composeEncoder(dateAdapter, Calendars.getTime()));
         builder.put(Date.class, dateAdapter);
@@ -93,7 +105,6 @@ final class ObjectAdapter implements Adapter<Value, Object> {
         builder.put(Integer.class, integerAdapter);
         builder.put(List.class, listAdapter);
         builder.put(Map.class, mapAdapter);
-        builder.put(Number.class, numberAdapter);
         builder.put(String.class, stringAdapter);
         
         this.adapters = builder.build();
@@ -102,7 +113,9 @@ final class ObjectAdapter implements Adapter<Value, Object> {
     private Adapter<Value, ?> getDecoder(Value value) {
         final ValueType type = ValueType.of(value);
         final Class<?> javaType = type.getType();
-        return adapters.get(javaType);
+        final Adapter<Value, ?> adapter = adapters.get(javaType);
+        Preconditions.checkState(adapter != null, "No adapter configured for %s", javaType);
+        return adapter;
     }
     
     @SuppressWarnings("unchecked")
@@ -118,9 +131,7 @@ final class ObjectAdapter implements Adapter<Value, Object> {
     @Override
     public Object decode(Value input) {
         Preconditions.checkNotNull(input, "Input");
-        final Adapter<Value, ?> adapter = getDecoder(input);
-        Preconditions.checkState(adapter != null, "No adapter configured for %s", input.getClass());
-        return adapter.decode(input);
+        return getDecoder(input).decode(input);
     }
     
     @Override

@@ -17,6 +17,7 @@
 package de.cosmocode.palava.ipc.xml.rpc;
 
 import java.io.OutputStream;
+import java.io.StringWriter;
 
 import javax.annotation.concurrent.ThreadSafe;
 import javax.xml.bind.Marshaller;
@@ -27,6 +28,8 @@ import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.ChannelHandler.Sharable;
 import org.jboss.netty.handler.codec.oneone.OneToOneEncoder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
@@ -45,11 +48,13 @@ import de.cosmocode.palava.ipc.xml.rpc.generated.MethodResponse;
 @ThreadSafe
 final class JaxbEncoder extends OneToOneEncoder {
 
-    private final Provider<Marshaller> marshaller;
+    private static final Logger LOG = LoggerFactory.getLogger(JaxbEncoder.class);
+    
+    private final Provider<Marshaller> provider;
     
     @Inject
-    public JaxbEncoder(@XmlRpc Provider<Marshaller> marshaller) {
-        this.marshaller = Preconditions.checkNotNull(marshaller, "Marshaller");
+    public JaxbEncoder(@XmlRpc Provider<Marshaller> provider) {
+        this.provider = Preconditions.checkNotNull(provider, "Provider");
     }
     
     @Override
@@ -57,7 +62,16 @@ final class JaxbEncoder extends OneToOneEncoder {
         if (message instanceof MethodResponse) {
             final ChannelBuffer buffer = ChannelBuffers.dynamicBuffer();
             final OutputStream stream = ChannelBuffering.asOutputStream(buffer);
-            marshaller.get().marshal(message, stream);
+            final Marshaller marshaller = provider.get();
+            marshaller.marshal(message, stream);
+
+            if (LOG.isTraceEnabled()) {
+                final StringWriter writer = new StringWriter();
+                marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
+                marshaller.marshal(message, writer);
+                LOG.trace("Xml-Rpc response:\n{}", writer);
+            }
+            
             return buffer;
         } else {
             return message;

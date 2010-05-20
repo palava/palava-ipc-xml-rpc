@@ -21,6 +21,7 @@ import java.util.concurrent.ConcurrentMap;
 import javax.annotation.concurrent.ThreadSafe;
 
 import org.jboss.netty.channel.Channel;
+import org.jboss.netty.channel.ChannelFutureListener;
 import org.jboss.netty.channel.ChannelHandler;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.ChannelStateEvent;
@@ -105,7 +106,7 @@ final class XmlRpcHandler extends SimpleChannelHandler {
             final DetachedConnection connection = connections.get(channel);
             call.attachTo(connection);
             final Object result = process(call);
-            event.getChannel().write(result);
+            event.getChannel().write(result).addListener(ChannelFutureListener.CLOSE);
         } else {
             throw new IllegalStateException(String.format("Unknown message {}", event.getMessage()));
         }
@@ -116,10 +117,6 @@ final class XmlRpcHandler extends SimpleChannelHandler {
         scope.enter(call);
         try {
             return executor.execute(call.getMethodName(), call);
-        /* CHECKSTYLE:OFF */
-        } catch (RuntimeException e) {
-        /* CHECKSTYLE:ON */
-            throw new IpcCommandExecutionException(e);
         } finally {
             callDestroyEvent.eventIpcCallDestroy(call);
             scope.exit();
@@ -136,14 +133,9 @@ final class XmlRpcHandler extends SimpleChannelHandler {
     
     @Override
     public void exceptionCaught(ChannelHandlerContext context, ExceptionEvent event) throws Exception {
-        final Throwable cause = event.getCause();
         final Channel channel = event.getChannel();
-        LOG.error("Exception in channel " + channel, cause);
-        if (cause instanceof IpcCommandExecutionException) {
-            channel.write(cause);
-        } else {
-            channel.close();
-        }
+        LOG.error("Exception in channel " + channel, event.getCause());
+        channel.write(event.getCause()).addListener(ChannelFutureListener.CLOSE);
     }
 
 }
