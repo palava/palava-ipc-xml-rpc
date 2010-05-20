@@ -21,7 +21,6 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import com.google.common.base.Predicate;
 import com.google.inject.BindingAnnotation;
 
 /**
@@ -38,57 +37,6 @@ import com.google.inject.BindingAnnotation;
 @BindingAnnotation
 public @interface XmlRpc {
 
-    Predicate<Object> OR_ANY = new Predicate<Object>() {
-        
-        @Override
-        public boolean apply(Object input) {
-            return input == null || input == XmlRpc.class;
-        }
-        
-    };
-    
-    String METHOD_CALL = "methodCall";
-    
-    String METHOD_NAME = "methodName";
-    
-    String PARAMS = "params";
-    
-    String PARAM = "params";
-    
-    String VALUE = "value";
-    
-    String I4 = "i4";
-    
-    String INT = "int";
-    
-    String BOOLEAN = "boolean";
-    
-    String TRUE = "1";
-    
-    String FALSE = "0";
-    
-    String STRING = "string";
-    
-    String DOUBLE = "double";
-    
-    String DATE_TIME_ISO_8601 = "dateTime.iso8601";
-    
-    String BASE_64 = "base64";
-    
-    String STRUCT = "struct";
-    
-    String MEMBER = "member";
-    
-    String NAME = "name";
-    
-    String ARRAY = "array";
-
-    String DATA = "data";
-    
-    String METHOD_RESPONSE = "methodResponse";
-    
-    String FAULT = "fault";
-    
     String FAULT_CODE = "faultCode";
     
     String FAULT_STRING = "faultString";
