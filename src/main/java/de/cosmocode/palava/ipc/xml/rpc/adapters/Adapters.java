@@ -153,4 +153,39 @@ public final class Adapters {
         };
     }
     
+    /**
+     * Composes an {@link Adapter} and a {@link Function} into a one-way encoder, an adapter which
+     * supports {@link Adapter#encode(Object)} but not {@link Adapter#decode(Object)}.
+     * 
+     * @since 1.0
+     * @param <F> the source type
+     * @param <T> the intermediate type
+     * @param <S> the target type
+     * @param adapter the backing adapter
+     * @param function the encoding function
+     * @return a composed adapter using the specified adapter and function for encoding 
+     */
+    public static <F, T, S> Adapter<F, S> composeEncoder(final Adapter<F, T> adapter, final Function<S, T> function) {
+        Preconditions.checkNotNull(adapter, "Adapter");
+        Preconditions.checkNotNull(function, "Function");
+        return new Adapter<F, S>() {
+            
+            @Override
+            public S decode(F input) {
+                throw new UnsupportedOperationException();
+            };
+            
+            @Override
+            public F encode(S input) {
+                return adapter.encode(function.apply(input));
+            };
+            
+            @Override
+            public String toString() {
+                return String.format("Adapters.compose(%s, %s)", adapter, function);
+            }
+            
+        };
+    }
+    
 }

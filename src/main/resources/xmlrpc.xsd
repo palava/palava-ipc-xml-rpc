@@ -16,7 +16,7 @@
     limitations under the License.
 
 -->
-<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jxb="http://java.sun.com/xml/ns/jaxb">
   <xsd:element name="methodCall">
     <xsd:complexType>
       <xsd:all>
@@ -47,15 +47,15 @@
             </xsd:sequence>
           </xsd:complexType>
         </xsd:element>
-        <xsd:element name="fault">
+        <xsd:element name="fault" minOccurs="1" maxOccurs="1">
           <xsd:complexType>
             <xsd:sequence>
-              <xsd:element name="value">
+              <xsd:element name="value" minOccurs="1" maxOccurs="1">
                 <xsd:complexType>
                   <xsd:sequence>
-                    <xsd:element name="struct"> 
+                    <xsd:element name="struct" minOccurs="1" maxOccurs="1"> 
                       <xsd:complexType> 
-                        <xsd:sequence> 
+                        <xsd:sequence>
                           <xsd:element name="member" type="member" minOccurs="2" maxOccurs="2"/>
                         </xsd:sequence>
                       </xsd:complexType>
@@ -76,15 +76,15 @@
   </xsd:complexType>
   <xsd:complexType name="value">
     <xsd:choice>
+      <xsd:element name="array" type="array" minOccurs="1" maxOccurs="1"/>
+      <xsd:element name="base64" type="xsd:base64Binary" minOccurs="1" maxOccurs="1"/>
       <xsd:element name="boolean" type="boolean" minOccurs="1" maxOccurs="1"/>
+      <xsd:element name="dateTime.iso8601" type="xsd:dateTime" minOccurs="1" maxOccurs="1"/>
+      <xsd:element name="double" type="xsd:double" minOccurs="1" maxOccurs="1"/>
       <xsd:element name="i4" type="xsd:int" minOccurs="1" maxOccurs="1"/>
       <xsd:element name="int" type="xsd:int" minOccurs="1" maxOccurs="1"/>
-      <xsd:element name="double" type="xsd:double" minOccurs="1" maxOccurs="1"/>
       <xsd:element name="string" type="string" minOccurs="1" maxOccurs="1"/>
-      <xsd:element name="base64" type="xsd:base64Binary" minOccurs="1" maxOccurs="1"/>
-      <xsd:element name="dateTime.iso8601" type="xsd:dateTime" minOccurs="1" maxOccurs="1"/>
       <xsd:element name="struct" type="struct" minOccurs="1" maxOccurs="1"/>
-      <xsd:element name="array" type="array" minOccurs="1" maxOccurs="1"/>
     </xsd:choice>
   </xsd:complexType>
   <xsd:simpleType name="boolean">
@@ -104,13 +104,13 @@
   </xsd:complexType>
   <xsd:complexType name="member">
     <xsd:sequence>
-      <xsd:element name="name" type="xsd:string" />
+      <xsd:element name="name" type="xsd:string" minOccurs="1" maxOccurs="1"/>
       <xsd:element name="value" type="value" minOccurs="1" maxOccurs="1"/>
     </xsd:sequence>
   </xsd:complexType>
   <xsd:complexType name="array">
     <xsd:sequence>
-      <xsd:element name="data">
+      <xsd:element name="data" minOccurs="1" maxOccurs="1">
         <xsd:complexType>
           <xsd:sequence>
             <xsd:element name="value" type="value" minOccurs="1" maxOccurs="unbounded"/>

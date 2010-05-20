@@ -48,7 +48,7 @@
             <configuration>
               <generateDirectory>src/main/java</generateDirectory>
               <generatePackage>de.cosmocode.palava.ipc.xml.rpc.generated</generatePackage>
-              <verbose>true</verbose>            
+              <schemaLanguage>XMLSCHEMA</schemaLanguage>
             </configuration>
           </execution>
         </executions>
@@ -79,6 +79,11 @@
       <groupId>de.cosmocode.palava</groupId>
       <artifactId>palava-ipc-netty</artifactId>
       <version>[1.0-SNAPSHOT,2)</version>
+    </dependency>
+    <dependency>
+      <groupId>de.cosmocode</groupId>
+      <artifactId>cosmocode-commons</artifactId>
+      <version>[1.6-SNAPSHOT,2)</version>
     </dependency>
     <dependency>
       <groupId>com.google.guava</groupId>

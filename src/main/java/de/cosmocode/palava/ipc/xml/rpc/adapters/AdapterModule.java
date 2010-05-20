@@ -29,17 +29,18 @@ public final class AdapterModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        bind(ListAdapter.LITERAL).to(ListAdapter.class).in(Singleton.class);
-        bind(InputStreamAdapter.LITERAL).to(InputStreamAdapter.class).in(Singleton.class);
         bind(BooleanAdapter.LITERAL).to(BooleanAdapter.class).in(Singleton.class);
         bind(DateAdapter.LITERAL).to(DateAdapter.class).in(Singleton.class);
         bind(DoubleAdapter.LITERAL).to(DoubleAdapter.class).in(Singleton.class);
-        bind(IntegerAdapter.LITERAL).to(IntegerAdapter.class).in(Singleton.class);
         bind(EntryAdapter.LITERAL).to(EntryAdapter.class).in(Singleton.class);
-        bind(StringAdapter.LITERAL).to(StringAdapter.class).in(Singleton.class);
+        bind(InputStreamAdapter.LITERAL).to(InputStreamAdapter.class).in(Singleton.class);
+        bind(IntegerAdapter.LITERAL).to(IntegerAdapter.class).in(Singleton.class);
+        bind(ListAdapter.LITERAL).to(ListAdapter.class).in(Singleton.class);
         bind(MapAdapter.LITERAL).to(MapAdapter.class).in(Singleton.class);
-        bind(ThrowableAdapter.LITERAL).to(ThrowableAdapter.class).in(Singleton.class);
+        bind(NumberAdapter.LITERAL).to(NumberAdapter.class).in(Singleton.class);
         bind(ObjectAdapter.LITERAL).to(ObjectAdapter.class).in(Singleton.class);
+        bind(StringAdapter.LITERAL).to(StringAdapter.class).in(Singleton.class);
+        bind(ThrowableAdapter.LITERAL).to(ThrowableAdapter.class).in(Singleton.class);
     }
     
 }
