@@ -165,7 +165,8 @@ public final class Adapters {
      * @param function the encoding function
      * @return a composed adapter using the specified adapter and function for encoding 
      */
-    public static <F, T, S> Adapter<F, S> composeEncoder(final Adapter<F, T> adapter, final Function<S, T> function) {
+    public static <F, T, S> Adapter<F, S> composeEncoder(final Adapter<F, T> adapter, 
+        final Function<? super S, ? extends T> function) {
         Preconditions.checkNotNull(adapter, "Adapter");
         Preconditions.checkNotNull(function, "Function");
         return new Adapter<F, S>() {
