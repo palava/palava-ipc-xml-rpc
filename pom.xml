@@ -46,7 +46,6 @@
             </goals>
             <phase>generate-sources</phase>
             <configuration>
-              <generateDirectory>src/main/java</generateDirectory>
               <generatePackage>de.cosmocode.palava.ipc.xml.rpc.generated</generatePackage>
               <schemaLanguage>XMLSCHEMA</schemaLanguage>
             </configuration>
