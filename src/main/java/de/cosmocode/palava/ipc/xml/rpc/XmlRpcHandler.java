@@ -120,7 +120,6 @@ final class XmlRpcHandler extends SimpleChannelHandler {
         } finally {
             callDestroyEvent.eventIpcCallDestroy(call);
             scope.exit();
-            call.clear();
         }
     }
     
