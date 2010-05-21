@@ -46,8 +46,18 @@
             </goals>
             <phase>generate-sources</phase>
             <configuration>
+              <schemaIncludes>
+                <include>*.xsd</include>
+              </schemaIncludes>
               <generatePackage>de.cosmocode.palava.ipc.xml.rpc.generated</generatePackage>
               <schemaLanguage>XMLSCHEMA</schemaLanguage>
+              <!-- 
+              <schemaIncludes>
+                <include>*.rng</include>
+              </schemaIncludes>
+              <generatePackage>de.cosmocode.palava.ipc.xml.rpc.generatedv2</generatePackage>
+              <schemaLanguage>RELAXNG</schemaLanguage>
+               -->
             </configuration>
           </execution>
         </executions>

@@ -25,7 +25,6 @@ import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 
 import org.jboss.netty.channel.ChannelPipeline;
-import org.jboss.netty.channel.ChannelPipelineFactory;
 import org.jboss.netty.channel.Channels;
 import org.jboss.netty.handler.codec.http.HttpChunkAggregator;
 import org.jboss.netty.handler.codec.http.HttpRequestDecoder;
@@ -34,11 +33,11 @@ import org.jboss.netty.handler.codec.http.HttpResponseEncoder;
 import com.google.inject.Binder;
 import com.google.inject.Key;
 import com.google.inject.Module;
-import com.google.inject.Provider;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
 
+import de.cosmocode.palava.ipc.netty.ConnectionManager;
 import de.cosmocode.palava.ipc.xml.rpc.adapters.AdapterModule;
 import de.cosmocode.palava.ipc.xml.rpc.generated.ObjectFactory;
 
@@ -54,8 +53,7 @@ public final class XmlRpcNettyModule implements Module {
     public void configure(Binder binder) {
         binder.bind(HttpRequestDecoder.class).in(Scopes.NO_SCOPE);
         binder.bind(HttpResponseEncoder.class).in(Singleton.class);
-        binder.bind(HttpContentDecoder.class).in(Singleton.class);
-        binder.bind(HttpContentEncoder.class).in(Singleton.class);
+        binder.bind(HttpHandler.class).in(Singleton.class);
         binder.bind(JaxbDecoder.class).in(Singleton.class);
         binder.bind(JaxbEncoder.class).in(Singleton.class);
         binder.bind(MethodCallDecoder.class).in(Singleton.class);
@@ -84,11 +82,11 @@ public final class XmlRpcNettyModule implements Module {
      * Provides a channel pipeline.
      * 
      * @since 1.0
+     * @param manager the connection manager
      * @param httpRequestDecoder the http request decoder
      * @param chunkAggregator the http chunk aggregator
      * @param httpResponseEncoder the http response encoder
-     * @param httpContentDecoder the http content decoder
-     * @param httpContentEncoder the http content encoder
+     * @param httpHandler the http handler
      * @param jaxbDecoder the xml-rpc decoder
      * @param jaxbEncoder the xml-rpc encoder
      * @param callDecoder the call decoder
@@ -97,42 +95,25 @@ public final class XmlRpcNettyModule implements Module {
      * @return a new {@link ChannelPipeline}
      */
     @Provides
+    @XmlRpc
     ChannelPipeline provideChannelPipeline(
+        ConnectionManager manager,
         HttpRequestDecoder httpRequestDecoder, HttpChunkAggregator chunkAggregator,
         HttpResponseEncoder httpResponseEncoder, 
-        HttpContentDecoder httpContentDecoder, HttpContentEncoder httpContentEncoder,
+        HttpHandler httpHandler,
         JaxbDecoder jaxbDecoder, JaxbEncoder jaxbEncoder,
         MethodCallDecoder callDecoder,
         MethodResponseEncoder responseEncoder,
         XmlRpcHandler handler) {
         return Channels.pipeline(
+            manager,
             httpRequestDecoder, chunkAggregator,
             httpResponseEncoder, 
-            httpContentDecoder, httpContentEncoder,
+            httpHandler,
             jaxbDecoder, jaxbEncoder,
             callDecoder, responseEncoder,
             handler
         );
-    }
-    
-    /**
-     * Provides a channel pipeline factory.
-     * 
-     * @since 1.0
-     * @param provider the backing provider
-     * @return a new {@link ChannelPipelineFactory}
-     */
-    @Provides
-    @Singleton
-    ChannelPipelineFactory provideChannelPipelineFactory(final Provider<ChannelPipeline> provider) {
-        return new ChannelPipelineFactory() {
-            
-            @Override
-            public ChannelPipeline getPipeline() throws Exception {
-                return provider.get();
-            }
-            
-        };
     }
     
     /**

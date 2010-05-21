@@ -56,7 +56,7 @@ final class ObjectAdapter implements Adapter<Value, Object> {
     /**
      * Orders classes by hierarchy, sub classes are considered less than super classes.
      */
-    private static final Ordering<Class<?>> ORDER_BY_HIERARCHY = new Ordering<Class<?>>() {
+    private static final Ordering<Class<?>> HIERARCHY = new Ordering<Class<?>>() {
         
         @Override
         public int compare(Class<?> left, Class<?> right) {
@@ -94,7 +94,7 @@ final class ObjectAdapter implements Adapter<Value, Object> {
         this.nullValue = factory.createValue();
         this.nullValue.setString("null");
         
-        final Builder<Class<?>, Adapter<Value, ?>> builder = ImmutableSortedMap.orderedBy(ORDER_BY_HIERARCHY);
+        final Builder<Class<?>, Adapter<Value, ?>> builder = ImmutableSortedMap.orderedBy(HIERARCHY);
         
         builder.put(Number.class, numberAdapter);
         builder.put(Boolean.class, booleanAdapter);

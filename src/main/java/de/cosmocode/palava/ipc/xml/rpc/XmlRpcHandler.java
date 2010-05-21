@@ -16,15 +16,12 @@
 
 package de.cosmocode.palava.ipc.xml.rpc;
 
-import java.util.concurrent.ConcurrentMap;
-
 import javax.annotation.concurrent.ThreadSafe;
 
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelFutureListener;
 import org.jboss.netty.channel.ChannelHandler;
 import org.jboss.netty.channel.ChannelHandlerContext;
-import org.jboss.netty.channel.ChannelStateEvent;
 import org.jboss.netty.channel.ExceptionEvent;
 import org.jboss.netty.channel.MessageEvent;
 import org.jboss.netty.channel.SimpleChannelHandler;
@@ -33,7 +30,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.MapMaker;
 import com.google.inject.Inject;
 
 import de.cosmocode.palava.core.Registry.Proxy;
@@ -43,9 +39,7 @@ import de.cosmocode.palava.ipc.IpcCallDestroyEvent;
 import de.cosmocode.palava.ipc.IpcCallScope;
 import de.cosmocode.palava.ipc.IpcCommandExecutionException;
 import de.cosmocode.palava.ipc.IpcCommandExecutor;
-import de.cosmocode.palava.ipc.IpcConnectionCreateEvent;
-import de.cosmocode.palava.ipc.IpcConnectionDestroyEvent;
-import de.cosmocode.palava.ipc.netty.ChannelConnection;
+import de.cosmocode.palava.ipc.netty.ConnectionManager;
 import de.cosmocode.palava.ipc.protocol.DetachedConnection;
 
 /**
@@ -61,41 +55,28 @@ final class XmlRpcHandler extends SimpleChannelHandler {
 
     private static final Logger LOG = LoggerFactory.getLogger(XmlRpcHandler.class);
     
-    private final ConcurrentMap<Channel, DetachedConnection> connections = new MapMaker().makeMap();
+    private final ConnectionManager manager;
     
-    private IpcCommandExecutor executor;
+    private final IpcCommandExecutor executor;
     
-    private final IpcConnectionCreateEvent connectionCreateEvent;
+    private final IpcCallCreateEvent createEvent;
     
-    private final IpcConnectionDestroyEvent connectionDestroyEvent;
-    
-    private final IpcCallCreateEvent callCreateEvent;
-    
-    private final IpcCallDestroyEvent callDestroyEvent;
+    private final IpcCallDestroyEvent destroyEvent;
     
     private final IpcCallScope scope;
     
     @Inject
-    public XmlRpcHandler(IpcCommandExecutor executor,
-        @Proxy IpcConnectionCreateEvent connectionCreateEvent,
-        @SilentProxy IpcConnectionDestroyEvent connectionDestroyEvent,
-        @Proxy IpcCallCreateEvent callCreateEvent, 
-        @SilentProxy IpcCallDestroyEvent callDestroyEvent,
+    public XmlRpcHandler(
+        ConnectionManager manager,
+        IpcCommandExecutor executor,
+        @Proxy IpcCallCreateEvent createEvent, 
+        @SilentProxy IpcCallDestroyEvent destroyEvent,
         IpcCallScope scope) {
+        this.manager = Preconditions.checkNotNull(manager, "Manager");
         this.executor = Preconditions.checkNotNull(executor, "Executor");
-        this.connectionCreateEvent = Preconditions.checkNotNull(connectionCreateEvent, "ConnectionCreateEvent");
-        this.connectionDestroyEvent = Preconditions.checkNotNull(connectionDestroyEvent, "ConnectionDestroyEvent");
-        this.callCreateEvent = Preconditions.checkNotNull(callCreateEvent, "CallCreateEvent");
-        this.callDestroyEvent = Preconditions.checkNotNull(callDestroyEvent, "CallDestroyEvent");
+        this.createEvent = Preconditions.checkNotNull(createEvent, "CreateEvent");
+        this.destroyEvent = Preconditions.checkNotNull(destroyEvent, "DestroyEvent");
         this.scope = Preconditions.checkNotNull(scope, "Scope");
-    }
-    
-    @Override
-    public void channelConnected(ChannelHandlerContext context, ChannelStateEvent event) throws Exception {
-        final Channel channel = event.getChannel();
-        final DetachedConnection connection = new ChannelConnection(channel);
-        connections.put(channel, connection);
-        connectionCreateEvent.eventIpcConnectionCreate(connection);
     }
     
     @Override
@@ -103,31 +84,24 @@ final class XmlRpcHandler extends SimpleChannelHandler {
         if (event.getMessage() instanceof XmlRpcCall) {
             final XmlRpcCall call = XmlRpcCall.class.cast(event.getMessage());
             final Channel channel = event.getChannel();
-            final DetachedConnection connection = connections.get(channel);
+            final DetachedConnection connection = manager.get(channel);
             call.attachTo(connection);
             final Object result = process(call);
-            event.getChannel().write(result).addListener(ChannelFutureListener.CLOSE);
+            event.getChannel().write(result);
         } else {
-            throw new IllegalStateException(String.format("Unknown message {}", event.getMessage()));
+            throw new IllegalStateException(String.format("Unknown message %s", event.getMessage()));
         }
     }
     
     private Object process(XmlRpcCall call) throws IpcCommandExecutionException {
-        callCreateEvent.eventIpcCallCreate(call);
+        createEvent.eventIpcCallCreate(call);
         scope.enter(call);
         try {
             return executor.execute(call.getMethodName(), call);
         } finally {
-            callDestroyEvent.eventIpcCallDestroy(call);
+            destroyEvent.eventIpcCallDestroy(call);
             scope.exit();
         }
-    }
-    
-    @Override
-    public void channelClosed(ChannelHandlerContext context, ChannelStateEvent event) throws Exception {
-        final DetachedConnection connection = connections.remove(event.getChannel());
-        connectionDestroyEvent.eventIpcConnectionDestroy(connection);
-        connection.clear();
     }
     
     @Override

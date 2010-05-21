@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+  <!--
+
+    Copyright 2010 CosmoCode GmbH Licensed under the Apache License,
+    Version 2.0 (the "License"); you may not use this file except in
+    compliance with the License. You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0 Unless required by
+    applicable law or agreed to in writing, software distributed under
+    the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES
+    OR CONDITIONS OF ANY KIND, either express or implied. See the
+    License for the specific language governing permissions and
+    limitations under the License.
+  -->
+<grammar xmlns="http://relaxng.org/ns/structure/1.0"
+    datatypeLibrary="http://www.w3.org/2001/XMLSchema-datatypes">
+  <start combine="choice">
+    <ref name="methodCall" />
+  </start>
+  <define name="methodCall">
+    <element name="methodCall">
+      <interleave>
+        <optional>
+          <element name="methodName">
+            <data type="string">
+              <param name="pattern">[A-Za-z0-9/\.:_]*</param>
+            </data>
+          </element>
+        </optional>
+        <optional>
+          <optional>
+            <element name="params">
+              <zeroOrMore>
+                <element name="param">
+                  <ref name="param" />
+                </element>
+              </zeroOrMore>
+            </element>
+          </optional>
+        </optional>
+      </interleave>
+    </element>
+  </define>
+  <start combine="choice">
+    <ref name="methodResponse" />
+  </start>
+  <define name="methodResponse">
+    <element name="methodResponse">
+      <choice>
+        <element name="params">
+          <element name="param">
+            <ref name="param" />
+          </element>
+        </element>
+        <element name="fault">
+          <element name="value">
+            <element name="struct">
+              <element name="member">
+                <ref name="member" />
+              </element>
+              <element name="member">
+                <ref name="member" />
+              </element>
+            </element>
+          </element>
+        </element>
+      </choice>
+    </element>
+  </define>
+  <define name="param">
+    <element name="value">
+      <ref name="value" />
+    </element>
+  </define>
+  <define name="value">
+    <choice>
+      <text/>
+      <element name="array">
+        <ref name="array" />
+      </element>
+      <element name="base64">
+        <data type="base64Binary" />
+      </element>
+      <element name="boolean">
+        <ref name="boolean" />
+      </element>
+      <element name="dateTime.iso8601">
+        <ref name="dateTime.iso8601" />
+      </element>
+      <element name="double">
+        <data type="double" />
+      </element>
+      <element name="i4">
+        <data type="int" />
+      </element>
+      <element name="int">
+        <data type="int" />
+      </element>
+      <element name="string">
+        <ref name="string" />
+      </element>
+      <element name="struct">
+        <ref name="struct" />
+      </element>
+    </choice>
+  </define>
+  <define name="boolean">
+    <data type="boolean">
+      <param name="pattern">0|1</param>
+    </data>
+  </define>
+  <define name="dateTime.iso8601">
+    <data type="string">
+      <param name="pattern">
+        ^[\d]{4}((0[1-9])|(1[0-2]))((0[1-9])|([1-2][0-9])|(3[0-1]))T(([0-1][0-9])|(2[0-3])):([0-5][0-9]):([0-5][0-9])$
+      </param>
+    </data>
+  </define>
+  <define name="string">
+    <data type="string">
+      <param name="pattern">([ -~]|\n|\r|\t)*</param>
+    </data>
+  </define>
+  <define name="struct">
+    <zeroOrMore>
+      <element name="member">
+        <ref name="member" />
+      </element>
+    </zeroOrMore>
+  </define>
+  <define name="member">
+    <element name="name">
+      <data type="string" />
+    </element>
+    <element name="value">
+      <ref name="value" />
+    </element>
+  </define>
+  <define name="array">
+    <element name="data">
+      <oneOrMore>
+        <element name="value">
+          <ref name="value" />
+        </element>
+      </oneOrMore>
+    </element>
+  </define>
+</grammar>

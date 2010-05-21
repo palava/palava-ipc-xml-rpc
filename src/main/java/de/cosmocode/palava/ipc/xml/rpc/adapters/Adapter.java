@@ -19,8 +19,6 @@ package de.cosmocode.palava.ipc.xml.rpc.adapters;
 /**
  * An adapter allows bidirectional conversion from one type to another.
  *
- * TODO should be package private and accessed via an AdapterService
- *
  * @since 1.0
  * @author Willi Schoenborn
  * @param <F> first type

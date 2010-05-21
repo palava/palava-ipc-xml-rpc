@@ -16,7 +16,10 @@
 
 package de.cosmocode.palava.ipc.xml.rpc;
 
+import org.jboss.netty.channel.ChannelPipeline;
+
 import com.google.inject.Binder;
+import com.google.inject.Key;
 import com.google.inject.Module;
 
 import de.cosmocode.palava.concurrent.DefaultThreadProviderModule;
@@ -29,6 +32,7 @@ import de.cosmocode.palava.ipc.IpcEventModule;
 import de.cosmocode.palava.ipc.IpcModule;
 import de.cosmocode.palava.ipc.command.localvm.LocalIpcCommandExecutorModule;
 import de.cosmocode.palava.ipc.netty.Boss;
+import de.cosmocode.palava.ipc.netty.ChannelPipelineFactoryModule;
 import de.cosmocode.palava.ipc.netty.NettyServiceModule;
 import de.cosmocode.palava.ipc.netty.Worker;
 import de.cosmocode.palava.jmx.FakeMBeanServerModule;
@@ -55,6 +59,8 @@ public final class XmlRpcTestModule implements Module {
         binder.install(new IpcModule());
         binder.install(new IpcEventModule());
         binder.install(new NettyServiceModule());
+        binder.install(new ChannelPipelineFactoryModule());
+        binder.bind(ChannelPipeline.class).to(Key.get(ChannelPipeline.class, XmlRpc.class));
         binder.install(new XmlRpcNettyModule());
     }
 
