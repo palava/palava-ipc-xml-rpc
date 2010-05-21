@@ -19,8 +19,8 @@ package de.cosmocode.palava.ipc.xml.rpc;
 import org.jboss.netty.channel.ChannelPipeline;
 
 import com.google.inject.Binder;
-import com.google.inject.Key;
 import com.google.inject.Module;
+import com.google.inject.Provides;
 
 import de.cosmocode.palava.concurrent.DefaultThreadProviderModule;
 import de.cosmocode.palava.concurrent.ExecutorModule;
@@ -33,7 +33,9 @@ import de.cosmocode.palava.ipc.IpcModule;
 import de.cosmocode.palava.ipc.command.localvm.LocalIpcCommandExecutorModule;
 import de.cosmocode.palava.ipc.netty.Boss;
 import de.cosmocode.palava.ipc.netty.ChannelPipelineFactoryModule;
+import de.cosmocode.palava.ipc.netty.DefaultConnectionManagerModule;
 import de.cosmocode.palava.ipc.netty.NettyServiceModule;
+import de.cosmocode.palava.ipc.netty.NioServerSocketChannelFactoryModule;
 import de.cosmocode.palava.ipc.netty.Worker;
 import de.cosmocode.palava.jmx.FakeMBeanServerModule;
 
@@ -50,18 +52,34 @@ public final class XmlRpcTestModule implements Module {
         binder.install(new TypeConverterModule());
         binder.install(new LifecycleModule());
         binder.install(new DefaultRegistryModule());
+        binder.install(new DefaultThreadProviderModule());
         binder.install(new FakeMBeanServerModule());
+        
         binder.install(new ExecutorModule(Boss.class, Boss.NAME));
         binder.install(new ExecutorModule(Worker.class, Worker.NAME));
-        binder.install(new DefaultThreadProviderModule());
+        
         binder.install(new LocalIpcCommandExecutorModule());
         binder.install(new DefaultIpcCallFilterChainFactoryModule());
         binder.install(new IpcModule());
         binder.install(new IpcEventModule());
-        binder.install(new NettyServiceModule());
+        
+        binder.install(new NioServerSocketChannelFactoryModule());
+        binder.install(new DefaultConnectionManagerModule());
         binder.install(new ChannelPipelineFactoryModule());
-        binder.bind(ChannelPipeline.class).to(Key.get(ChannelPipeline.class, XmlRpc.class));
+        binder.install(new NettyServiceModule());
         binder.install(new XmlRpcNettyModule());
+    }
+    
+    /**
+     * Provides a channel pipeline for testing.
+     * 
+     * @since 1.0
+     * @param pipeline the underlying channel pipeline
+     * @return a new {@link ChannelPipeline}
+     */
+    @Provides
+    ChannelPipeline provideChannelPipeline(@XmlRpc ChannelPipeline pipeline) {
+        return pipeline;
     }
 
 }
