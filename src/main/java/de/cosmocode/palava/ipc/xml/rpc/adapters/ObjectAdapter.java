@@ -31,7 +31,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.collect.Ordering;
 import com.google.common.collect.ImmutableSortedMap.Builder;
-import com.google.common.primitives.Ints;
 import com.google.inject.Inject;
 import com.google.inject.TypeLiteral;
 
@@ -60,14 +59,14 @@ final class ObjectAdapter implements Adapter<Value, Object> {
         
         @Override
         public int compare(Class<?> left, Class<?> right) {
-            if (left == right) {
+            if (left.equals(right)) {
                 return 0;
             } else if (left.isAssignableFrom(right)) {
                 return 1;
             } else if (right.isAssignableFrom(left)) {
                 return -1;
             } else {
-                return Ints.compare(left.hashCode(), right.hashCode());
+                return left.getName().compareTo(right.getName());
             }
         }
         

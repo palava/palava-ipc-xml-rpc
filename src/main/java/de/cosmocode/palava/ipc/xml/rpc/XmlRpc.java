@@ -49,4 +49,6 @@ public @interface XmlRpc {
     
     String VALIDATE = PREFIX + "validate";
     
+    String COOKIE_NAME = PREFIX + "cookieName";
+    
 }

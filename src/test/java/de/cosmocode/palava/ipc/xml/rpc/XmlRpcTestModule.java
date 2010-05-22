@@ -21,7 +21,9 @@ import org.jboss.netty.channel.ChannelPipeline;
 import com.google.inject.Binder;
 import com.google.inject.Module;
 import com.google.inject.Provides;
+import com.google.inject.Singleton;
 
+import de.cosmocode.palava.concurrent.BackgroundSchedulerModule;
 import de.cosmocode.palava.concurrent.DefaultThreadProviderModule;
 import de.cosmocode.palava.concurrent.ExecutorModule;
 import de.cosmocode.palava.core.DefaultRegistryModule;
@@ -37,7 +39,11 @@ import de.cosmocode.palava.ipc.netty.DefaultConnectionManagerModule;
 import de.cosmocode.palava.ipc.netty.NettyServiceModule;
 import de.cosmocode.palava.ipc.netty.NioServerSocketChannelFactoryModule;
 import de.cosmocode.palava.ipc.netty.Worker;
+import de.cosmocode.palava.ipc.session.store.IpcSessionStore;
+import de.cosmocode.palava.ipc.session.store.StoreIpcSessionModule;
 import de.cosmocode.palava.jmx.FakeMBeanServerModule;
+import de.cosmocode.palava.store.MemoryStoreModule;
+import de.cosmocode.palava.store.Store;
 
 /**
  * Test module.
@@ -55,8 +61,13 @@ public final class XmlRpcTestModule implements Module {
         binder.install(new DefaultThreadProviderModule());
         binder.install(new FakeMBeanServerModule());
         
+        binder.install(new BackgroundSchedulerModule());
         binder.install(new ExecutorModule(Boss.class, Boss.NAME));
         binder.install(new ExecutorModule(Worker.class, Worker.NAME));
+        
+        binder.install(new StoreIpcSessionModule());
+        binder.install(new MemoryStoreModule());
+        binder.bind(Store.class).annotatedWith(IpcSessionStore.class).to(Store.class).in(Singleton.class);
         
         binder.install(new LocalIpcCommandExecutorModule());
         binder.install(new DefaultIpcCallFilterChainFactoryModule());

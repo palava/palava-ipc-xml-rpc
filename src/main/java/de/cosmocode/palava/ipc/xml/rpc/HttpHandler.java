@@ -16,8 +16,14 @@
 
 package de.cosmocode.palava.ipc.xml.rpc;
 
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
+import java.util.Collections;
+import java.util.Set;
+
 import javax.annotation.concurrent.ThreadSafe;
 
+import org.apache.commons.lang.StringUtils;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.channel.ChannelFuture;
 import org.jboss.netty.channel.ChannelFutureListener;
@@ -27,6 +33,9 @@ import org.jboss.netty.channel.Channels;
 import org.jboss.netty.channel.MessageEvent;
 import org.jboss.netty.channel.SimpleChannelHandler;
 import org.jboss.netty.channel.ChannelHandler.Sharable;
+import org.jboss.netty.handler.codec.http.Cookie;
+import org.jboss.netty.handler.codec.http.CookieDecoder;
+import org.jboss.netty.handler.codec.http.CookieEncoder;
 import org.jboss.netty.handler.codec.http.DefaultHttpResponse;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -38,6 +47,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Preconditions;
+import com.google.inject.Inject;
+import com.google.inject.name.Named;
+
+import de.cosmocode.palava.ipc.IpcSession;
+import de.cosmocode.palava.ipc.IpcSessionProvider;
+import de.cosmocode.palava.ipc.netty.ConnectionManager;
+import de.cosmocode.palava.ipc.protocol.DetachedConnection;
 
 /**
  * A {@link ChannelHandler} which decodes {@link HttpRequest}s
@@ -52,20 +68,67 @@ import com.google.common.base.Preconditions;
 final class HttpHandler extends SimpleChannelHandler {
 
     private static final Logger LOG = LoggerFactory.getLogger(HttpHandler.class);
+    
+    private final IpcSessionProvider provider;
+    
+    private final ConnectionManager manager;
 
-//    private HttpRequest request;
+    // TODO this should be a global pre-defined constant name
+    private String cookieName = "psessid";
+
+    @Inject
+    public HttpHandler(IpcSessionProvider provider, ConnectionManager manager) {
+        this.provider = Preconditions.checkNotNull(provider, "Provider");
+        this.manager = Preconditions.checkNotNull(manager, "Manager");
+    }
+
+    @Inject(optional = true)
+    public void setCookieName(@Named(XmlRpc.COOKIE_NAME) String cookieName) {
+        this.cookieName = Preconditions.checkNotNull(cookieName, "CookieName");
+    }
     
     @Override
     public void messageReceived(ChannelHandlerContext context, MessageEvent event) throws Exception {
         final Object message = event.getMessage();
         if (message instanceof HttpRequest) {
             final HttpRequest request = HttpRequest.class.cast(message);
+            final SocketAddress remoteAddress = event.getRemoteAddress();
+            
+            final String sessionId = findSessionId(request);
+            
+            final String identifier;
+            if (remoteAddress instanceof InetSocketAddress) {
+                identifier = InetSocketAddress.class.cast(remoteAddress).getHostName();
+            } else {
+                identifier = null;
+            }
+            
+            final IpcSession session = provider.getSession(sessionId, identifier);
+            final DetachedConnection connection = manager.get(event.getChannel());
+            connection.attachTo(session);
+            
             context.setAttachment(request);
             LOG.trace("Decoding {} into channel buffer", request);
-            Channels.fireMessageReceived(context, request.getContent(), event.getRemoteAddress());
+            Channels.fireMessageReceived(context, request.getContent(), remoteAddress);
         } else {
             context.sendUpstream(event);
         }
+    }
+    
+    private String findSessionId(HttpRequest request) {
+        final CookieDecoder decoder = new CookieDecoder();
+        final String cookieString = request.getHeader(Names.COOKIE);
+        if (StringUtils.isBlank(cookieString)) return null;
+        final Set<Cookie> cookies = decoder.decode(cookieString);
+        
+        for (Cookie cookie : cookies) {
+            if (cookieName.equals(cookie.getName())) {
+                LOG.trace("Found sessionId in cookie: {}", cookie.getValue());
+                return cookie.getValue();
+            }
+        }
+        
+        return null;
     }
     
     @Override
@@ -75,10 +138,39 @@ final class HttpHandler extends SimpleChannelHandler {
             final HttpRequest request = HttpRequest.class.cast(context.getAttachment());
             Preconditions.checkState(request != null, "No incoming request");
             final ChannelBuffer content = ChannelBuffer.class.cast(message);
+            
             LOG.trace("Encoding {} into http response", content);
             final HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
+            
+            // setting all requires headers
             response.setHeader(Names.CONTENT_TYPE, "text/xml");
             response.setHeader(Names.CONTENT_LENGTH, content.readableBytes());
+            
+            final String cookieString = request.getHeader(Names.COOKIE);
+            final Set<Cookie> cookies;
+            
+            if (StringUtils.isNotBlank(cookieString)) {
+                final CookieDecoder decoder = new CookieDecoder();
+                cookies = decoder.decode(cookieString);
+            } else {
+                LOG.trace("No cookie header was set");
+                cookies = Collections.emptySet();
+            }
+
+            final DetachedConnection connection = manager.get(event.getChannel());
+            final IpcSession session = connection.getSession();
+            
+            final CookieEncoder cookieEncoder = new CookieEncoder(true);
+            for (Cookie cookie : cookies) {
+                cookieEncoder.addCookie(cookie);
+            }
+            
+            final String sessionId = session.getSessionId();
+            LOG.trace("Adding session cookie {}/{}", cookieName, sessionId);
+            cookieEncoder.addCookie(cookieName, sessionId);
+            
+            response.setHeader(Names.SET_COOKIE, cookieEncoder.encode());
+            
             response.setContent(content);
             
             final ChannelFuture future = event.getFuture();

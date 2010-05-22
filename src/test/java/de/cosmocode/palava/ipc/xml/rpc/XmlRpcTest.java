@@ -16,6 +16,9 @@
 
 package de.cosmocode.palava.ipc.xml.rpc;
 
+import java.net.CookieHandler;
+import java.net.CookieManager;
+import java.net.CookiePolicy;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
@@ -28,6 +31,7 @@ import java.util.Map;
 import org.apache.xmlrpc.XmlRpcException;
 import org.apache.xmlrpc.client.XmlRpcClient;
 import org.apache.xmlrpc.client.XmlRpcClientConfigImpl;
+import org.apache.xmlrpc.client.XmlRpcSunHttpTransportFactory;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -107,6 +111,24 @@ public final class XmlRpcTest implements UnitProvider<XmlRpcClient> {
         );
         final Object returnedMap = unit().execute(Echo.class.getName(), Collections.singletonList(map));
         Assert.assertEquals(map, returnedMap);
+    }
+    
+    /**
+     * Tests that the session stays the same.
+     * 
+     * @throws XmlRpcException should not happen
+     */
+    @Test
+    public void sameSession() throws XmlRpcException {
+        final XmlRpcClient client = unit();
+
+        final CookieManager manager = new CookieManager();
+        manager.setCookiePolicy(CookiePolicy.ACCEPT_ALL);
+        CookieHandler.setDefault(manager);
+        client.setTransportFactory(new XmlRpcSunHttpTransportFactory(client));
+        
+        client.execute(SessionIdCheckCommand.class.getName(), Collections.emptyList());
+        client.execute(SessionIdCheckCommand.class.getName(), Collections.emptyList());
     }
     
     /**
