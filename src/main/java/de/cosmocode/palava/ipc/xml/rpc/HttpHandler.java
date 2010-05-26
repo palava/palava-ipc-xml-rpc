@@ -93,7 +93,8 @@ final class HttpHandler extends SimpleChannelHandler {
             final HttpRequest request = HttpRequest.class.cast(message);
             final SocketAddress remoteAddress = event.getRemoteAddress();
             
-            final String sessionId = findSessionId(request);
+            final Set<Cookie> cookies = getCookies(request);
+            final String sessionId = findSessionId(cookies);
             
             final String identifier;
             if (remoteAddress instanceof InetSocketAddress) {
@@ -106,8 +107,7 @@ final class HttpHandler extends SimpleChannelHandler {
             final DetachedConnection connection = manager.get(event.getChannel());
             connection.attachTo(session);
             
-            // TODO place set of cookies as attachment
-            context.setAttachment(request);
+            context.setAttachment(new Attachment(request, cookies));
             LOG.trace("Decoding {} into channel buffer", request);
             Channels.fireMessageReceived(context, request.getContent(), remoteAddress);
         } else {
@@ -115,19 +115,20 @@ final class HttpHandler extends SimpleChannelHandler {
         }
     }
     
-    private String findSessionId(HttpRequest request) {
+    private Set<Cookie> getCookies(HttpRequest request) {
         final CookieDecoder decoder = new CookieDecoder();
         final String cookieString = request.getHeader(Names.COOKIE);
-        if (StringUtils.isBlank(cookieString)) return null;
-        final Set<Cookie> cookies = decoder.decode(cookieString);
-        
+        if (StringUtils.isBlank(cookieString)) return Collections.emptySet();
+        return decoder.decode(cookieString);
+    }
+    
+    private String findSessionId(Set<Cookie> cookies) {
         for (Cookie cookie : cookies) {
             if (cookieName.equals(cookie.getName())) {
                 LOG.trace("Found sessionId in cookie: {}", cookie.getValue());
                 return cookie.getValue();
             }
         }
-        
         return null;
     }
     
@@ -135,8 +136,8 @@ final class HttpHandler extends SimpleChannelHandler {
     public void writeRequested(ChannelHandlerContext context, MessageEvent event) throws Exception {
         final Object message = event.getMessage();
         if (message instanceof ChannelBuffer) {
-            final HttpRequest request = HttpRequest.class.cast(context.getAttachment());
-            Preconditions.checkState(request != null, "No incoming request");
+            final Attachment attachment = Attachment.class.cast(context.getAttachment());
+            Preconditions.checkState(attachment != null, "No attachment set");
             final ChannelBuffer content = ChannelBuffer.class.cast(message);
             
             LOG.trace("Encoding {} into http response", content);
@@ -146,22 +147,11 @@ final class HttpHandler extends SimpleChannelHandler {
             response.setHeader(Names.CONTENT_TYPE, "text/xml");
             response.setHeader(Names.CONTENT_LENGTH, content.readableBytes());
             
-            final String cookieString = request.getHeader(Names.COOKIE);
-            final Set<Cookie> cookies;
-            
-            if (StringUtils.isNotBlank(cookieString)) {
-                final CookieDecoder decoder = new CookieDecoder();
-                cookies = decoder.decode(cookieString);
-            } else {
-                LOG.trace("No cookie header was set");
-                cookies = Collections.emptySet();
-            }
-
             final DetachedConnection connection = manager.get(event.getChannel());
             final IpcSession session = connection.getSession();
             
             final CookieEncoder cookieEncoder = new CookieEncoder(true);
-            for (Cookie cookie : cookies) {
+            for (Cookie cookie : attachment.getCookies()) {
                 cookieEncoder.addCookie(cookie);
             }
             
@@ -176,7 +166,7 @@ final class HttpHandler extends SimpleChannelHandler {
             final ChannelFuture future = event.getFuture();
             Channels.write(context, future, response, event.getRemoteAddress());
             
-            if (HttpHeaders.isKeepAlive(request)) {
+            if (HttpHeaders.isKeepAlive(attachment.getRequest())) {
                 LOG.trace("Http request was marked keep-alive, not closing the connection.");
             } else {
                 LOG.trace("Http request was not marked as keep-alive, closing connection...");
@@ -185,6 +175,34 @@ final class HttpHandler extends SimpleChannelHandler {
         } else {
             context.sendDownstream(event);
         }
+    }
+    
+    /**
+     * Internal attachment which can be used to pass an {@link HttpRequest} and
+     * a set of {@link Cookie}s as an attachment using {@link ChannelHandlerContext#setAttachment(Object)}.
+     *
+     * @since 1.0
+     * @author Willi Schoenborn
+     */
+    private static final class Attachment {
+        
+        private final HttpRequest request;
+        
+        private final Set<Cookie> cookies;
+
+        public Attachment(HttpRequest request, Set<Cookie> cookies) {
+            this.request = request;
+            this.cookies = cookies;
+        }
+        
+        public HttpRequest getRequest() {
+            return request;
+        }
+        
+        public Set<Cookie> getCookies() {
+            return cookies;
+        }
+        
     }
     
 }

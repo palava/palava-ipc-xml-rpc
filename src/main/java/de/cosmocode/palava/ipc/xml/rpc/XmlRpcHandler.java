@@ -19,7 +19,6 @@ package de.cosmocode.palava.ipc.xml.rpc;
 import javax.annotation.concurrent.ThreadSafe;
 
 import org.jboss.netty.channel.Channel;
-import org.jboss.netty.channel.ChannelFutureListener;
 import org.jboss.netty.channel.ChannelHandler;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.ExceptionEvent;
@@ -93,11 +92,17 @@ final class XmlRpcHandler extends SimpleChannelHandler {
         }
     }
     
-    private Object process(XmlRpcCall call) throws IpcCommandExecutionException {
+    private Object process(XmlRpcCall call) {
         createEvent.eventIpcCallCreate(call);
         scope.enter(call);
         try {
             return executor.execute(call.getMethodName(), call);
+        } catch (IpcCommandExecutionException e) {
+            return e;
+        /* CHECKSTYLE:OFF */
+        } catch (RuntimeException e) {
+        /* CHECKSTYLE:ON */
+            return e;
         } finally {
             destroyEvent.eventIpcCallDestroy(call);
             scope.exit();
@@ -108,7 +113,7 @@ final class XmlRpcHandler extends SimpleChannelHandler {
     public void exceptionCaught(ChannelHandlerContext context, ExceptionEvent event) throws Exception {
         final Channel channel = event.getChannel();
         LOG.error("Exception in channel " + channel, event.getCause());
-        channel.write(event.getCause()).addListener(ChannelFutureListener.CLOSE);
+        channel.close();
     }
 
 }
