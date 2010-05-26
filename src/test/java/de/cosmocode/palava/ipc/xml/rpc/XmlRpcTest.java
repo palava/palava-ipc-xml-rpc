@@ -91,8 +91,8 @@ public final class XmlRpcTest implements UnitProvider<XmlRpcClient> {
         final List<?> list = Arrays.asList((int) System.currentTimeMillis(), Maps.newHashMap(), now);
         final Map<?, ?> expected = ImmutableMap.of(
             "0", list.get(0),
-            "1", Maps.newHashMap(),
-            "2", now
+            "1", list.get(1),
+            "2", list.get(2)
         );
         final Object returnedList = unit().execute(Echo.class.getName(), list);
         Assert.assertEquals(expected, returnedList);
