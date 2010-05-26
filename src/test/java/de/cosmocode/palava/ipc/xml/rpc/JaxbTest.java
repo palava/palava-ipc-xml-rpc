@@ -18,6 +18,7 @@ package de.cosmocode.palava.ipc.xml.rpc;
 
 import java.net.URL;
 
+import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 
@@ -62,8 +63,8 @@ public final class JaxbTest {
             final Struct struct = adapter.encode(throwable).getStruct();
             Assert.assertEquals(2, struct.getMember().size());
             final Value value = struct.getMember().get(0).getValue();
-            Assert.assertTrue(value.getI4() != null); 
-            Assert.assertEquals(throwable.hashCode(), value.getI4().intValue()); 
+            Assert.assertFalse(value.getContent().isEmpty()); 
+            Assert.assertEquals(throwable.hashCode(), JAXBElement.class.cast(value.getContent().get(0)).getValue()); 
         } finally {
             framework.stop();
         }
@@ -89,13 +90,12 @@ public final class JaxbTest {
             Assert.assertEquals(Echo.class.getName(), methodCall.getMethodName());
             Assert.assertEquals(2, methodCall.getParams().getParam().size());
             final Param first = methodCall.getParams().getParam().get(0);
-            Assert.assertTrue(first.getValue().getString() != null);
-            final String name = first.getValue().getString();
+            Assert.assertFalse(first.getValue().getContent().isEmpty());
+            final String name = JAXBElement.class.cast(first.getValue().getContent().get(0)).getValue().toString();
             Assert.assertEquals(Echo.class.getName(), name);
             final Param second = methodCall.getParams().getParam().get(1);
-            Assert.assertTrue(second.getValue().isBoolean() != null);
-            final Boolean truth = second.getValue().isBoolean();
-            Assert.assertTrue(truth);
+            Assert.assertFalse(second.getValue().getContent().isEmpty());
+            Assert.assertEquals(Boolean.TRUE, JAXBElement.class.cast(second.getValue().getContent().get(0)).getValue());
         } finally {
             framework.stop();
         }

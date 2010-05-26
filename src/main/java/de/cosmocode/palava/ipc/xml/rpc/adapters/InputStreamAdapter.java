@@ -20,6 +20,8 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
+import javax.xml.bind.JAXBElement;
+
 import com.google.common.base.Preconditions;
 import com.google.common.io.ByteStreams;
 import com.google.inject.Inject;
@@ -50,7 +52,9 @@ final class InputStreamAdapter implements Adapter<Value, InputStream> {
     @Override
     public InputStream decode(Value input) {
         Preconditions.checkNotNull(input, "Input");
-        return new ByteArrayInputStream(input.getBase64());
+        @SuppressWarnings("unchecked")
+        final JAXBElement<byte[]> element = JAXBElement.class.cast(input.getContent().get(0));
+        return new ByteArrayInputStream(element.getValue());
     }
     
     @Override
@@ -65,7 +69,7 @@ final class InputStreamAdapter implements Adapter<Value, InputStream> {
             throw new IllegalArgumentException(e);
         }
         
-        value.setBase64(bytes);
+        value.getContent().add(factory.createValueBase64(bytes));
         return value;
     }
 

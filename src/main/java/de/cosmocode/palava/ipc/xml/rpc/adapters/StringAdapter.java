@@ -16,6 +16,10 @@
 
 package de.cosmocode.palava.ipc.xml.rpc.adapters;
 
+import java.io.Serializable;
+
+import javax.xml.bind.JAXBElement;
+
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import com.google.inject.TypeLiteral;
@@ -45,14 +49,19 @@ final class StringAdapter implements Adapter<Value, String> {
     @Override
     public String decode(Value input) {
         Preconditions.checkNotNull(input, "Input");
-        return input.getString();
+        final Serializable first = input.getContent().get(0);
+        if (first instanceof String) {
+            return first.toString();
+        } else {
+            return JAXBElement.class.cast(first).getValue().toString();
+        }
     }
     
     @Override
     public Value encode(String input) {
         Preconditions.checkNotNull(input, "Input");
         final Value value = factory.createValue();
-        value.setString(input);
+        value.getContent().add(factory.createValueString(input));
         return value;
     }
     

@@ -91,7 +91,7 @@ final class ObjectAdapter implements Adapter<Value, Object> {
         
         Preconditions.checkNotNull(factory, "Factory");
         this.nullValue = factory.createValue();
-        this.nullValue.setString("null");
+        this.nullValue.getContent().add(factory.createValueString("null"));
         
         final Builder<Class<?>, Adapter<Value, ?>> builder = ImmutableSortedMap.orderedBy(HIERARCHY);
         

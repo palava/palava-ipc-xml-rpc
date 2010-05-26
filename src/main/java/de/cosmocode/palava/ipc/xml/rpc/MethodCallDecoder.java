@@ -16,11 +16,13 @@
 
 package de.cosmocode.palava.ipc.xml.rpc;
 
+import java.io.Serializable;
 import java.util.AbstractList;
 import java.util.List;
 import java.util.Map;
 
 import javax.annotation.concurrent.ThreadSafe;
+import javax.xml.bind.JAXBElement;
 
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelHandlerContext;
@@ -37,6 +39,7 @@ import de.cosmocode.palava.ipc.MapIpcArguments;
 import de.cosmocode.palava.ipc.xml.rpc.adapters.Adapter;
 import de.cosmocode.palava.ipc.xml.rpc.generated.MethodCall;
 import de.cosmocode.palava.ipc.xml.rpc.generated.Param;
+import de.cosmocode.palava.ipc.xml.rpc.generated.Struct;
 import de.cosmocode.palava.ipc.xml.rpc.generated.Value;
 import de.cosmocode.palava.ipc.xml.rpc.generated.MethodCall.Params;
 
@@ -78,7 +81,7 @@ final class MethodCallDecoder extends OneToOneDecoder {
             } else if (params.getParam().isEmpty()) {
                 LOG.trace("Empty params provided");
                 arguments = MapIpcArguments.empty();
-            } else if (params.getParam().size() == 1 && params.getParam().get(0).getValue().getStruct() != null) {
+            } else if (hasSingleStruct(params)) {
                 LOG.trace("Treating single struct param as named params");
                 // single struct parameter will be treated as named parameters
                 arguments = named(params.getParam().get(0).getValue());
@@ -92,6 +95,16 @@ final class MethodCallDecoder extends OneToOneDecoder {
         } else {
             return message;
         }
+    }
+    
+    private boolean hasSingleStruct(Params params) {
+        if (params.getParam().size() == 1) {
+            final Serializable first = params.getParam().get(0).getValue().getContent().get(0);
+            if (first instanceof JAXBElement<?>) {
+                return JAXBElement.class.cast(first).getValue() instanceof Struct;
+            }
+        }
+        return false;
     }
 
     private IpcArguments named(Value value) {

@@ -45,14 +45,14 @@ final class DoubleAdapter implements Adapter<Value, Double> {
     @Override
     public Double decode(Value input) {
         Preconditions.checkNotNull(input, "Input");
-        return input.getDouble();
+        return Double.class.cast(input.getContent().get(0));
     }
     
     @Override
     public Value encode(Double input) {
         Preconditions.checkNotNull(input, "Input");
         final Value value = factory.createValue();
-        value.setDouble(input);
+        value.getContent().add(factory.createValueDouble(input));
         return value;
     }
     

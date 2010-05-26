@@ -59,14 +59,14 @@ final class ThrowableAdapter implements Adapter<Fault.Value, Throwable> {
         final Member faultCode = factory.createMember();
         faultCode.setName(XmlRpc.FAULT_CODE);
         final Value code = factory.createValue();
-        code.setI4(throwable.hashCode());
+        code.getContent().add(factory.createValueI4(throwable.hashCode()));
         faultCode.setValue(code);
         struct.getMember().add(faultCode);
         
         final Member faultString = factory.createMember();
         faultString.setName(XmlRpc.FAULT_STRING);
         final Value string = factory.createValue();
-        string.setString(throwable.toString());
+        string.getContent().add(factory.createValueString(throwable.toString()));
         faultString.setValue(string);
         struct.getMember().add(faultString);
         

@@ -17,12 +17,19 @@
 package de.cosmocode.palava.ipc.xml.rpc.adapters;
 
 import java.io.InputStream;
+import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
-import com.google.common.base.Preconditions;
+import javax.xml.bind.JAXBElement;
+import javax.xml.namespace.QName;
 
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Iterables;
+
+import de.cosmocode.palava.ipc.xml.rpc.generated.Array;
+import de.cosmocode.palava.ipc.xml.rpc.generated.Struct;
 import de.cosmocode.palava.ipc.xml.rpc.generated.Value;
 
 /**
@@ -45,11 +52,11 @@ enum ValueType {
     
     I4(Integer.class),
     
-    INT(Integer.class),
-    
     STRING(String.class),
     
     STRUCT(Map.class);
+
+    private static final QName DATETIME_ISO8601_NAME = QName.valueOf("dateTime.iso8601");
     
     private final Class<?> type;
     
@@ -71,25 +78,42 @@ enum ValueType {
      */
     public static ValueType of(Value value) {
         Preconditions.checkNotNull(value, "Value");
+        final Serializable first = Iterables.getOnlyElement(value.getContent());
+        final JAXBElement<?> element;
+        final Object content;
+        
+        if (first instanceof JAXBElement<?>) {
+            element = JAXBElement.class.cast(first);
+            content = element.getValue();
+        } else {
+            element = null;
+            content = first;
+        }
+        
         // ordering from the most used to the least
-        if (value.getString() != null) {
+        if (first instanceof String) {
             return STRING;
-        // TODO add no value string check here
-        } else if (value.isBoolean() != null) {
-            return BOOLEAN;
-        } else if (value.getStruct() != null) {
-            return STRUCT;
-        } else if (value.getI4() != null) {
-            return I4;
-        } else if (value.getInt() != null) {
-            return INT;
-        } else if (value.getArray() != null) {
-            return ARRAY;
-        } else if (value.getDouble() != null) {
-            return DOUBLE;
-        } else if (value.getDateTimeIso8601() != null) {
+        } else if (DATETIME_ISO8601_NAME.equals(element.getName())) {
             return DATETIME_ISO801;
-        } else if (value.getBase64() != null) {
+        } else {
+            return of(value, content);
+        }
+    }
+    
+    private static ValueType of(Value value, Object content) {
+        if (content instanceof String) {
+            return  STRING;
+        } else if (content instanceof Boolean) {
+            return BOOLEAN;
+        } else if (content instanceof Integer) {
+            return I4;
+        } else if (content instanceof Struct) {
+            return STRUCT;
+        } else if (content instanceof Array) {
+            return ARRAY;
+        } else if (content instanceof Double) {
+            return DOUBLE;
+        } else if (content instanceof byte[]) {
             return BASE64;
         } else {
             throw new IllegalArgumentException(String.format("%s is of unknown type", value));

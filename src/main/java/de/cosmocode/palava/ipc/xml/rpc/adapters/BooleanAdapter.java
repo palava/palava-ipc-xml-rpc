@@ -16,6 +16,8 @@
 
 package de.cosmocode.palava.ipc.xml.rpc.adapters;
 
+import javax.xml.bind.JAXBElement;
+
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import com.google.inject.TypeLiteral;
@@ -45,14 +47,16 @@ final class BooleanAdapter implements Adapter<Value, Boolean> {
     @Override
     public Boolean decode(Value input) {
         Preconditions.checkNotNull(input, "Input");
-        return input.isBoolean();
+        @SuppressWarnings("unchecked")
+        final JAXBElement<Boolean> element = JAXBElement.class.cast(input.getContent().get(0));
+        return element.getValue();
     }
     
     @Override
     public Value encode(Boolean input) {
         Preconditions.checkNotNull(input, "Input");
         final Value value = factory.createValue();
-        value.setBoolean(input);
+        value.getContent().add(factory.createValueBoolean(input));
         return value;
     }
     

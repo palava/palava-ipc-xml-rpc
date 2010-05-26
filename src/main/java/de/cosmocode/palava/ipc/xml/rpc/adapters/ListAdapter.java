@@ -19,6 +19,8 @@ package de.cosmocode.palava.ipc.xml.rpc.adapters;
 import java.util.AbstractList;
 import java.util.List;
 
+import javax.xml.bind.JAXBElement;
+
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import com.google.inject.TypeLiteral;
@@ -52,7 +54,9 @@ final class ListAdapter implements Adapter<Value, List<Object>> {
     @Override
     public List<Object> decode(Value input) {
         Preconditions.checkNotNull(input, "Input");
-        final List<Value> values = input.getArray().getData().getValue();
+        @SuppressWarnings("unchecked")
+        final JAXBElement<Array> element = JAXBElement.class.cast(input.getContent().get(0));
+        final List<Value> values = element.getValue().getData().getValue();
         return new AbstractList<Object>() {
 
             @Override
@@ -73,7 +77,7 @@ final class ListAdapter implements Adapter<Value, List<Object>> {
         Preconditions.checkNotNull(input, "Input");
         final Value value = factory.createValue();
         final Array array = factory.createArray();
-        value.setArray(array);
+        value.getContent().add(factory.createValueArray(array));
         final Data data = factory.createArrayData();
         array.setData(data);
         

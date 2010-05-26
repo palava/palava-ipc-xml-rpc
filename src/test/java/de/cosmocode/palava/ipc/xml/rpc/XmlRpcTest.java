@@ -106,7 +106,7 @@ public final class XmlRpcTest implements UnitProvider<XmlRpcClient> {
     @Test
     public void struct() throws XmlRpcException {
         final Map<?, ?> map = ImmutableMap.of(
-//            "name", getClass().getName(),
+            "name", getClass().getName(),
             "truth", Boolean.valueOf(Math.random() > 0.5)
         );
         final Object returnedMap = unit().execute(Echo.class.getName(), Collections.singletonList(map));

@@ -21,6 +21,8 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import javax.xml.bind.JAXBElement;
+
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import com.google.inject.TypeLiteral;
@@ -56,7 +58,9 @@ final class DateAdapter implements Adapter<Value, Date> {
     public Date decode(Value input) {
         Preconditions.checkNotNull(input, "Input");
         try {
-            return PSEUDO_ISO_8061.parse(input.getDateTimeIso8601());
+            @SuppressWarnings("unchecked")
+            final JAXBElement<String> element = JAXBElement.class.cast(input.getContent().get(0));
+            return PSEUDO_ISO_8061.parse(element.getValue());
         } catch (ParseException e) {
             throw new IllegalArgumentException(e);
         }
@@ -66,7 +70,7 @@ final class DateAdapter implements Adapter<Value, Date> {
     public Value encode(Date input) {
         Preconditions.checkNotNull(input, "Input");
         final Value value = factory.createValue();
-        value.setDateTimeIso8601(PSEUDO_ISO_8061.format(input));
+        value.getContent().add(factory.createValueDateTimeIso8601(PSEUDO_ISO_8061.format(input)));
         return value;
     }
     

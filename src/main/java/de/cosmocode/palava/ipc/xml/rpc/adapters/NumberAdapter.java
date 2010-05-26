@@ -16,6 +16,8 @@
 
 package de.cosmocode.palava.ipc.xml.rpc.adapters;
 
+import javax.xml.bind.JAXBElement;
+
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import com.google.inject.TypeLiteral;
@@ -48,13 +50,14 @@ final class NumberAdapter implements Adapter<Value, Number> {
         final ValueType type = ValueType.of(input);
         switch (type) {
             case I4: {
-                return input.getI4();
-            }
-            case INT: {
-                return input.getInt();
+                @SuppressWarnings("unchecked")
+                final JAXBElement<Integer> element = JAXBElement.class.cast(input.getContent().get(0));
+                return element.getValue();
             }
             case DOUBLE: {
-                return input.getDouble();
+                @SuppressWarnings("unchecked")
+                final JAXBElement<Double> element = JAXBElement.class.cast(input.getContent().get(0));
+                return element.getValue();
             }
             default: {
                 throw new IllegalArgumentException(type.toString());
@@ -68,13 +71,13 @@ final class NumberAdapter implements Adapter<Value, Number> {
         final Value value = factory.createValue();
         
         if (input instanceof Byte) {
-            value.setI4(input.intValue());
+            value.getContent().add(factory.createValueI4(input.intValue()));
         } else if (input instanceof Short) {
-            value.setI4(input.intValue());
+            value.getContent().add(factory.createValueI4(input.intValue()));
         } else if (input instanceof Integer) {
-            value.setI4(input.intValue());
+            value.getContent().add(factory.createValueI4(input.intValue()));
         } else {
-            value.setDouble(input.doubleValue());
+            value.getContent().add(factory.createValueDouble(input.doubleValue()));
         }
         
         return value;

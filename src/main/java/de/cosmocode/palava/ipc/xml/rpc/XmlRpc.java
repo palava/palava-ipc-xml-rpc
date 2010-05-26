@@ -38,7 +38,7 @@ import de.cosmocode.palava.ipc.Ipc;
 })
 @BindingAnnotation
 public @interface XmlRpc {
-
+    
     String FAULT_CODE = "faultCode";
     
     String FAULT_STRING = "faultString";

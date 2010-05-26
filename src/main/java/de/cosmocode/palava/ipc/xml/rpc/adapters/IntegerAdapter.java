@@ -16,6 +16,8 @@
 
 package de.cosmocode.palava.ipc.xml.rpc.adapters;
 
+import javax.xml.bind.JAXBElement;
+
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import com.google.inject.TypeLiteral;
@@ -45,14 +47,16 @@ final class IntegerAdapter implements Adapter<Value, Integer> {
     @Override
     public Integer decode(Value input) {
         Preconditions.checkNotNull(input, "Input");
-        return input.getI4() == null ? input.getInt() : input.getI4();
+        @SuppressWarnings("unchecked")
+        final JAXBElement<Integer> element = JAXBElement.class.cast(input.getContent().get(0));
+        return element.getValue();
     }
     
     @Override
     public Value encode(Integer input) {
         Preconditions.checkNotNull(input, "Input");
         final Value value = factory.createValue();
-        value.setI4(input);
+        value.getContent().add(factory.createValueI4(input));
         return value;
     }
     

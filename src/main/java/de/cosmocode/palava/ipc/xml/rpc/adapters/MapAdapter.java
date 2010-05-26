@@ -24,6 +24,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
 
+import javax.xml.bind.JAXBElement;
+
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterators;
@@ -61,7 +63,9 @@ final class MapAdapter implements Adapter<Value, Map<String, Object>> {
     @Override
     public Map<String, Object> decode(Value input) {
         Preconditions.checkNotNull(input, "Input");
-        final List<Member> members = input.getStruct().getMember();
+        @SuppressWarnings("unchecked")
+        final JAXBElement<Struct> element = JAXBElement.class.cast(input.getContent().get(0));
+        final List<Member> members = element.getValue().getMember();
         return new AbstractMap<String, Object>() {
 
             @Override
@@ -89,7 +93,7 @@ final class MapAdapter implements Adapter<Value, Map<String, Object>> {
         Preconditions.checkNotNull(input, "Input");
         final Value value = factory.createValue();
         final Struct struct = factory.createStruct();
-        value.setStruct(struct);
+        value.getContent().add(factory.createValueStruct(struct));
         
         for (Entry<String, Object> entry : input.entrySet()) {
             final Member member = entryAdapter.encode(entry);
