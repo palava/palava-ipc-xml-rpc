@@ -73,7 +73,6 @@ final class HttpHandler extends SimpleChannelHandler {
     
     private final ConnectionManager manager;
 
-    // TODO this should be a global pre-defined constant name
     private String cookieName = "psessid";
 
     @Inject

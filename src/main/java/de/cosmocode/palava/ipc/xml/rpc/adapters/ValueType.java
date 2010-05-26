@@ -74,6 +74,7 @@ enum ValueType {
         // ordering from the most used to the least
         if (value.getString() != null) {
             return STRING;
+        // TODO add no value string check here
         } else if (value.isBoolean() != null) {
             return BOOLEAN;
         } else if (value.getStruct() != null) {
@@ -91,7 +92,6 @@ enum ValueType {
         } else if (value.getBase64() != null) {
             return BASE64;
         } else {
-            // FIXME this should be considered a string
             throw new IllegalArgumentException(String.format("%s is of unknown type", value));
         }
     }
