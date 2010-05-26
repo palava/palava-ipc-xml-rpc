@@ -106,6 +106,7 @@ final class HttpHandler extends SimpleChannelHandler {
             final DetachedConnection connection = manager.get(event.getChannel());
             connection.attachTo(session);
             
+            // TODO place set of cookies as attachment
             context.setAttachment(request);
             LOG.trace("Decoding {} into channel buffer", request);
             Channels.fireMessageReceived(context, request.getContent(), remoteAddress);
