@@ -27,7 +27,6 @@ import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import com.google.inject.TypeLiteral;
 
-import de.cosmocode.commons.DateFormats;
 import de.cosmocode.palava.ipc.xml.rpc.XmlRpc;
 import de.cosmocode.palava.ipc.xml.rpc.generated.ObjectFactory;
 import de.cosmocode.palava.ipc.xml.rpc.generated.Value;
@@ -40,12 +39,10 @@ import de.cosmocode.palava.ipc.xml.rpc.generated.Value;
  */
 final class DateAdapter implements Adapter<Value, Date> {
     
-    public static final DateFormat PSEUDO_ISO_8061 = DateFormats.concurrent(
-        new SimpleDateFormat("yyyyMMdd'T'HH:mm:ss")
-    );
-
     static final TypeLiteral<Adapter<Value, Date>> LITERAL =
         new TypeLiteral<Adapter<Value, Date>>() { };
+        
+    private final DateFormat pseudoIso8061 = new SimpleDateFormat("yyyyMMdd'T'HH:mm:ss");
 
     private final ObjectFactory factory;
     
@@ -60,7 +57,7 @@ final class DateAdapter implements Adapter<Value, Date> {
         try {
             @SuppressWarnings("unchecked")
             final JAXBElement<String> element = JAXBElement.class.cast(input.getContent().get(0));
-            return PSEUDO_ISO_8061.parse(element.getValue());
+            return pseudoIso8061.parse(element.getValue());
         } catch (ParseException e) {
             throw new IllegalArgumentException(e);
         }
@@ -70,7 +67,7 @@ final class DateAdapter implements Adapter<Value, Date> {
     public Value encode(Date input) {
         Preconditions.checkNotNull(input, "Input");
         final Value value = factory.createValue();
-        value.getContent().add(factory.createValueDateTimeIso8601(PSEUDO_ISO_8061.format(input)));
+        value.getContent().add(factory.createValueDateTimeIso8601(pseudoIso8061.format(input)));
         return value;
     }
     

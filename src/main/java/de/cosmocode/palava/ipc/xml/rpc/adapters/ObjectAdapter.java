@@ -142,7 +142,6 @@ final class ObjectAdapter implements Adapter<Value, Object> {
             LOG.debug("No adapter configured for {}, using toString", input.getClass());
             return encode(input.toString());
         }
-        Preconditions.checkState(adapter != null, "No adapter configured for %s", input.getClass());
         return adapter.encode(input);
     }
 
