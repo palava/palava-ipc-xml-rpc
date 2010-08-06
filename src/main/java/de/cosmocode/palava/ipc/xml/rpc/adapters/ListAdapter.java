@@ -27,9 +27,9 @@ import com.google.inject.TypeLiteral;
 
 import de.cosmocode.palava.ipc.xml.rpc.XmlRpc;
 import de.cosmocode.palava.ipc.xml.rpc.generated.Array;
+import de.cosmocode.palava.ipc.xml.rpc.generated.Array.Data;
 import de.cosmocode.palava.ipc.xml.rpc.generated.ObjectFactory;
 import de.cosmocode.palava.ipc.xml.rpc.generated.Value;
-import de.cosmocode.palava.ipc.xml.rpc.generated.Array.Data;
 
 /**
  * An {@link Array} to {@link List} adapter.

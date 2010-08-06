@@ -21,16 +21,16 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.SortedMap;
 import java.util.Map.Entry;
+import java.util.SortedMap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSortedMap;
-import com.google.common.collect.Ordering;
 import com.google.common.collect.ImmutableSortedMap.Builder;
+import com.google.common.collect.Ordering;
 import com.google.inject.Inject;
 import com.google.inject.TypeLiteral;
 

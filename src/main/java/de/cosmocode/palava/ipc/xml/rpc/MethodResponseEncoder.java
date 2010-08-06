@@ -21,8 +21,8 @@ import java.util.Map;
 import javax.annotation.concurrent.ThreadSafe;
 
 import org.jboss.netty.channel.Channel;
-import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.ChannelHandler.Sharable;
+import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.handler.codec.oneone.OneToOneEncoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,11 +32,11 @@ import com.google.inject.Inject;
 
 import de.cosmocode.palava.ipc.xml.rpc.adapters.Adapter;
 import de.cosmocode.palava.ipc.xml.rpc.generated.MethodResponse;
+import de.cosmocode.palava.ipc.xml.rpc.generated.MethodResponse.Fault;
+import de.cosmocode.palava.ipc.xml.rpc.generated.MethodResponse.Params;
 import de.cosmocode.palava.ipc.xml.rpc.generated.ObjectFactory;
 import de.cosmocode.palava.ipc.xml.rpc.generated.Param;
 import de.cosmocode.palava.ipc.xml.rpc.generated.Value;
-import de.cosmocode.palava.ipc.xml.rpc.generated.MethodResponse.Fault;
-import de.cosmocode.palava.ipc.xml.rpc.generated.MethodResponse.Params;
 
 /**
  * An encoder which encodes {@link Map}s into {@link MethodResponse}s.

@@ -22,9 +22,9 @@ import com.google.inject.TypeLiteral;
 
 import de.cosmocode.palava.ipc.xml.rpc.XmlRpc;
 import de.cosmocode.palava.ipc.xml.rpc.generated.Member;
+import de.cosmocode.palava.ipc.xml.rpc.generated.MethodResponse.Fault;
 import de.cosmocode.palava.ipc.xml.rpc.generated.ObjectFactory;
 import de.cosmocode.palava.ipc.xml.rpc.generated.Value;
-import de.cosmocode.palava.ipc.xml.rpc.generated.MethodResponse.Fault;
 
 /**
  * A {@link Fault.Value.Struct} to {@link Throwable} adapter.

@@ -33,10 +33,10 @@ import de.cosmocode.palava.core.Framework;
 import de.cosmocode.palava.core.Palava;
 import de.cosmocode.palava.ipc.xml.rpc.adapters.Adapter;
 import de.cosmocode.palava.ipc.xml.rpc.generated.MethodCall;
-import de.cosmocode.palava.ipc.xml.rpc.generated.Param;
-import de.cosmocode.palava.ipc.xml.rpc.generated.Value;
 import de.cosmocode.palava.ipc.xml.rpc.generated.MethodResponse.Fault;
 import de.cosmocode.palava.ipc.xml.rpc.generated.MethodResponse.Fault.Value.Struct;
+import de.cosmocode.palava.ipc.xml.rpc.generated.Param;
+import de.cosmocode.palava.ipc.xml.rpc.generated.Value;
 
 /**
  * Tests jaxb un/marshalling.

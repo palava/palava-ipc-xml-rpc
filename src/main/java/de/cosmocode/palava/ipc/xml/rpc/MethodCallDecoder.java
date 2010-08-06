@@ -25,8 +25,8 @@ import javax.annotation.concurrent.ThreadSafe;
 import javax.xml.bind.JAXBElement;
 
 import org.jboss.netty.channel.Channel;
-import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.ChannelHandler.Sharable;
+import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.handler.codec.oneone.OneToOneDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,10 +38,10 @@ import de.cosmocode.palava.ipc.IpcArguments;
 import de.cosmocode.palava.ipc.MapIpcArguments;
 import de.cosmocode.palava.ipc.xml.rpc.adapters.Adapter;
 import de.cosmocode.palava.ipc.xml.rpc.generated.MethodCall;
+import de.cosmocode.palava.ipc.xml.rpc.generated.MethodCall.Params;
 import de.cosmocode.palava.ipc.xml.rpc.generated.Param;
 import de.cosmocode.palava.ipc.xml.rpc.generated.Struct;
 import de.cosmocode.palava.ipc.xml.rpc.generated.Value;
-import de.cosmocode.palava.ipc.xml.rpc.generated.MethodCall.Params;
 
 /**
  * A decoder which decodes {@link MethodCall}s into {@link XmlRpcCall}s.
