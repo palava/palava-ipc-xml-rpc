@@ -23,6 +23,7 @@ import javax.annotation.concurrent.ThreadSafe;
 import javax.xml.bind.Marshaller;
 
 import org.jboss.netty.buffer.ChannelBuffer;
+import org.jboss.netty.buffer.ChannelBufferOutputStream;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelHandler.Sharable;
@@ -61,7 +62,7 @@ final class JaxbEncoder extends OneToOneEncoder {
     protected Object encode(ChannelHandlerContext context, Channel channel, Object message) throws Exception {
         if (message instanceof MethodResponse) {
             final ChannelBuffer buffer = ChannelBuffers.dynamicBuffer();
-            final OutputStream stream = ChannelBuffering.asOutputStream(buffer);
+            final OutputStream stream = new ChannelBufferOutputStream(buffer);
             final Marshaller marshaller = provider.get();
             marshaller.marshal(message, stream);
 

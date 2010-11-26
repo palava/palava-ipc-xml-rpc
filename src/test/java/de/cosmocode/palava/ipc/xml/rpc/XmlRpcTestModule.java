@@ -31,8 +31,8 @@ import de.cosmocode.palava.core.inject.TypeConverterModule;
 import de.cosmocode.palava.core.lifecycle.LifecycleModule;
 import de.cosmocode.palava.ipc.DefaultIpcCallFilterChainFactoryModule;
 import de.cosmocode.palava.ipc.IpcEventModule;
-import de.cosmocode.palava.ipc.IpcModule;
-import de.cosmocode.palava.ipc.command.localvm.LocalIpcCommandExecutorModule;
+import de.cosmocode.palava.ipc.IpcScopeModule;
+import de.cosmocode.palava.ipc.execvm.LocalExecutorModule;
 import de.cosmocode.palava.ipc.netty.Boss;
 import de.cosmocode.palava.ipc.netty.ChannelPipelineFactoryModule;
 import de.cosmocode.palava.ipc.netty.DefaultConnectionManagerModule;
@@ -69,9 +69,9 @@ public final class XmlRpcTestModule implements Module {
         binder.install(new MemoryStoreModule());
         binder.bind(Store.class).annotatedWith(IpcSessionStore.class).to(Store.class).in(Singleton.class);
         
-        binder.install(new LocalIpcCommandExecutorModule());
+        binder.install(new LocalExecutorModule());
         binder.install(new DefaultIpcCallFilterChainFactoryModule());
-        binder.install(new IpcModule());
+        binder.install(new IpcScopeModule());
         binder.install(new IpcEventModule());
         
         binder.install(new NioServerSocketChannelFactoryModule());

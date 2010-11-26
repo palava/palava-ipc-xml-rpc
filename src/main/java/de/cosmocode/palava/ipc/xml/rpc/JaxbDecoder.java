@@ -24,6 +24,7 @@ import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
 
 import org.jboss.netty.buffer.ChannelBuffer;
+import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelHandler.Sharable;
 import org.jboss.netty.channel.ChannelHandlerContext;
@@ -63,7 +64,7 @@ final class JaxbDecoder extends OneToOneDecoder {
     protected Object decode(ChannelHandlerContext context, Channel channel, Object message) throws Exception {
         if (message instanceof ChannelBuffer) {
             final ChannelBuffer buffer = ChannelBuffer.class.cast(message);
-            final InputStream stream = ChannelBuffering.asInputStream(buffer);
+            final InputStream stream = new ChannelBufferInputStream(buffer);
             final Unmarshaller unmarshaller = unmarshallerProvider.get();
             final Object unmarshalled = unmarshaller.unmarshal(stream);
             
