@@ -36,7 +36,6 @@ import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
-import de.cosmocode.palava.ipc.netty.ChannelBuffering;
 import de.cosmocode.palava.ipc.xml.rpc.generated.MethodCall;
 
 /**
