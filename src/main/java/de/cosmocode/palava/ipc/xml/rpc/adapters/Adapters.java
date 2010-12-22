@@ -48,7 +48,7 @@ public final class Adapters {
             @Override
             public T apply(F from) {
                 return adapter.decode(from);
-            };
+            }
             
             @Override
             public String toString() {
@@ -75,7 +75,7 @@ public final class Adapters {
             @Override
             public F apply(T from) {
                 return adapter.encode(from);
-            };
+            }
             
             @Override
             public String toString() {
@@ -103,12 +103,12 @@ public final class Adapters {
             @Override
             public F decode(T input) {
                 return adapter.encode(input);
-            };
+            }
             
             @Override
             public T encode(F input) {
                 return adapter.decode(input);
-            };
+            }
             
             @Override
             public String toString() {
@@ -138,12 +138,12 @@ public final class Adapters {
             @Override
             public S decode(F input) {
                 return right.decode(left.decode(input));
-            };
+            }
 
             @Override
             public F encode(S input) {
                 return left.encode(right.encode(input));
-            };
+            }
 
             @Override
             public String toString() {
@@ -174,12 +174,12 @@ public final class Adapters {
             @Override
             public S decode(F input) {
                 throw new UnsupportedOperationException();
-            };
+            }
             
             @Override
             public F encode(S input) {
                 return adapter.encode(function.apply(input));
-            };
+            }
             
             @Override
             public String toString() {
